@@ -36,10 +36,13 @@ Quick starting guide for new plugin devs:
 - リポジトリをローカルの開発フォルダにクローンします。便利なように、このフォルダを `.obsidian/plugins/your-plugin-name` に置くこともできます。
 - Install NodeJS, then run `npm i` in the command line under your repo folder.
 - NodeJSをインストールし、リポジトリフォルダでコマンドラインから `npm i` を実行します。
+- `npm i`は`npm install`で使用するライブラリが`node-modules`に格納されます。
+- なお、`node-modules`はソース管理には含みませんが、`package-lock.json`はソース管理に含んでいます。
 - Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
 - `npm run dev` を実行して、`main.ts` から `main.js` へプラグインをコンパイルします。
 - Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
 - `main.ts` を編集（または新しい `.ts` ファイルを作成）します。これらの変更は自動的に `main.js` にコンパイルされます。
+- なお、この`main.js`は`.gitignore`によりソース管理からは除外されています。
 - Reload Obsidian to load the new version of your plugin.
 - Obsidian をリロードして新しいバージョンのプラグインを読み込みます。
 - Enable plugin in settings window.
