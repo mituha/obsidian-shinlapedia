@@ -1,17 +1,20 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { initializeGeminiAI , sendMessageToChat } from './services/geminiService'; // Import the function to initialize Gemini AI
 
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
+interface ShinLapediaPluginSettings {
 	mySetting: string;
+	geminApiKey: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: ShinLapediaPluginSettings = {
+	mySetting: 'default',
+	geminApiKey: 'default'
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ShinLapediaPlugin extends Plugin {
+	settings: ShinLapediaPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -40,9 +43,14 @@ export default class MyPlugin extends Plugin {
 		this.addCommand({
 			id: 'sample-editor-command',
 			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
+
+				const text = editor.getSelection();
+				const  response = await sendMessageToChat(text);
+				editor.replaceSelection(response.text);
+
+				//editor.replaceSelection('Sample Editor Command');
 			}
 		});
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
@@ -84,6 +92,14 @@ export default class MyPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+		//APIキーがある場合、AIエージェントの初期化を行う。
+		if (this.settings.geminApiKey && this.settings.geminApiKey !== 'default') {
+			initializeGeminiAI(this.settings.geminApiKey);
+			console.log('Gemini AI initialized with provided API key.');
+		} else {
+			console.warn('No valid Gemini API key found. AI features may not work as expected.');
+		}
 	}
 
 	async saveSettings() {
@@ -108,9 +124,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: ShinLapediaPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: ShinLapediaPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -128,6 +144,17 @@ class SampleSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.mySetting)
 				.onChange(async (value) => {
 					this.plugin.settings.mySetting = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Gemini API Key')
+			.setDesc('It\'s a secret')
+			.addText(text => text
+				.setPlaceholder('Enter your Gemini API Key')
+				.setValue(this.plugin.settings.geminApiKey)
+				.onChange(async (value) => {
+					this.plugin.settings.geminApiKey = value;
 					await this.plugin.saveSettings();
 				}));
 	}
