@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import { initializeGeminiAI , sendMessageToChat } from './services/geminiService'; // Import the function to initialize Gemini AI
 
 // Remember to rename these classes and interfaces!
@@ -76,11 +76,26 @@ export default class ShinLapediaPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
+		//ファイル新規作成時のイベントを確認
+		this.registerEvent(this.app.vault.on("create",async (file) => {
+			console.log('File created:', file);
+			// You can perform actions here, like initializing AI for the new file
+			if (file instanceof TFile && file.extension === 'md') {
+
+                console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
+
+                // ファイルの内容を読み込む
+                const currentContent = await this.app.vault.read(file);
+
+				const  response = await sendMessageToChat(`${file.basename}の意味を説明してください`);
+                // 新しい内容を追加
+                const newContent = currentContent + `\r\n${file.basename}\r\n====\r\n${response.text}\r\n`;
+
+                // ファイルに新しい内容を書き込む
+                await this.app.vault.modify(file, newContent);
+                console.log(`ファイル ${file.path} に内容を追加しました。`);
+			}	
+		}));
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
