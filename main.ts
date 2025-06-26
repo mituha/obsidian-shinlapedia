@@ -1,7 +1,7 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { initializeGeminiAI , sendMessageToChat } from './services/geminiService'; // Import the function to initialize Gemini AI
-import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './settings';
-import { SampleSettingTab } from './settingTab';
+import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
+import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -64,7 +64,7 @@ export default class ShinLapediaPlugin extends Plugin {
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new ShinLapediaSettingsTab(this.app, this));
 
 		//ファイル新規作成時のイベントを確認
 		this.registerEvent(this.app.vault.on("create",async (file) => {

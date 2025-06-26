@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import ShinLapediaPlugin from './main';
 
-export class SampleSettingTab extends PluginSettingTab {
+export class ShinLapediaSettingsTab extends PluginSettingTab {
 	plugin: ShinLapediaPlugin;
 
 	constructor(app: App, plugin: ShinLapediaPlugin) {
