@@ -1,17 +1,7 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { initializeGeminiAI , sendMessageToChat } from './services/geminiService'; // Import the function to initialize Gemini AI
-
-// Remember to rename these classes and interfaces!
-
-interface ShinLapediaPluginSettings {
-	mySetting: string;
-	geminApiKey: string;
-}
-
-const DEFAULT_SETTINGS: ShinLapediaPluginSettings = {
-	mySetting: 'default',
-	geminApiKey: 'default'
-}
+import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './settings';
+import { SampleSettingTab } from './settingTab';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -138,39 +128,4 @@ class SampleModal extends Modal {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: ShinLapediaPlugin;
 
-	constructor(app: App, plugin: ShinLapediaPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-
-		new Setting(containerEl)
-			.setName('Gemini API Key')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your Gemini API Key')
-				.setValue(this.plugin.settings.geminApiKey)
-				.onChange(async (value) => {
-					this.plugin.settings.geminApiKey = value;
-					await this.plugin.saveSettings();
-				}));
-	}
-}
