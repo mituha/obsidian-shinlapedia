@@ -66,7 +66,7 @@ export default class ShinLapediaPlugin extends Plugin {
 				//ファイルは空の前提
 				const  definition = await getWordDefinition(file.basename);
 				//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
-				await this.app.vault.append(file,`${file.basename}\r\n====\r\n${definition}\r\n`);
+				await this.app.vault.append(file,`${definition}\n`);
                 console.log(`ファイル ${file.path} に内容を追加しました。`);
 			}	
 		}));

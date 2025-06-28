@@ -14,7 +14,7 @@ export class LexicalEntryFormatter {
         const parts: string[] = [];
 
         // 1. 見出し語
-        parts.push(`## ${entry.lemma}`);
+        parts.push(`# ${entry.lemma}`);
         parts.push('');
 
         // 2. 読みと品詞
@@ -28,7 +28,7 @@ export class LexicalEntryFormatter {
 
         // 3. 定義
         if (entry.definitions && entry.definitions.length > 0) {
-            parts.push('### 意味');
+            parts.push('## 意味');
             entry.definitions.forEach((def, index) => {
                 parts.push(`${index + 1}. ${def}`);
             });
@@ -37,7 +37,7 @@ export class LexicalEntryFormatter {
 
         // 4. 例文
         if (entry.examples && entry.examples.length > 0) {
-            parts.push('### 例文');
+            parts.push('## 例文');
             entry.examples.forEach(ex => {
                 parts.push(`> ${ex.sentence}`);
                 if (ex.source) {
@@ -49,14 +49,14 @@ export class LexicalEntryFormatter {
 
         // 5. 類義語
         if (entry.synonyms && entry.synonyms.length > 0) {
-            parts.push('### 類義語');
+            parts.push('## 類義語');
             parts.push(entry.synonyms.map(s => `- ${s}`).join('\n'));
             parts.push('');
         }
 
         // 6. 対義語
         if (entry.antonyms && entry.antonyms.length > 0) {
-            parts.push('### 対義語');
+            parts.push('## 対義語');
             parts.push(entry.antonyms.map(a => `- ${a}`).join('\n'));
             parts.push('');
         }
