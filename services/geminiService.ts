@@ -1,7 +1,6 @@
 import { GoogleGenAI, Chat } from "@google/genai";
 import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
-import { v4 as uuidv4 } from 'uuid';
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
 const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
@@ -56,19 +55,7 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
         const response = result.text ?? "{}"; // デフォルト値を空のJSON文字列に設定
         const jsonResponse = JSON.parse(response);
 
-        return new LexicalEntry(
-            uuidv4(),
-            jsonResponse.lemma,
-            jsonResponse.partOfSpeech,
-            jsonResponse.definitions,
-            {
-                reading: jsonResponse.reading,
-                examples: jsonResponse.examples,
-                synonyms: jsonResponse.synonyms,
-                antonyms: jsonResponse.antonyms,
-                tags: jsonResponse.tags,
-            }
-        );
+        return LexicalEntry.fromJSON(jsonResponse);
     } catch (error) {
         console.error(`単語「${word}」の語彙情報取得中にAIエラーが発生しました:`, error);
         throw error;

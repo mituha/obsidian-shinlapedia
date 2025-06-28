@@ -1,4 +1,6 @@
 
+import { v4 as uuidv4 } from 'uuid';
+
 export class LexicalEntry {
     /**
      * 語彙エントリの一意なID
@@ -125,5 +127,21 @@ export class LexicalEntry {
             },
             required: ["lemma", "partOfSpeech", "definitions"]
         };
+    }
+
+    public static fromJSON(json: any): LexicalEntry {
+        return new LexicalEntry(
+            uuidv4(),
+            json.lemma,
+            json.partOfSpeech,
+            json.definitions,
+            {
+                reading: json.reading,
+                examples: json.examples,
+                synonyms: json.synonyms,
+                antonyms: json.antonyms,
+                tags: json.tags,
+            }
+        );
     }
 }
