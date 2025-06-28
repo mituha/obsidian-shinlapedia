@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
-import { initializeGeminiAI , sendMessageToChat } from './services/geminiService'; // Import the function to initialize Gemini AI
+import { initializeGeminiAI , getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 
@@ -27,20 +27,6 @@ export default class ShinLapediaPlugin extends Plugin {
 			name: 'Open sample modal (simple)',
 			callback: () => {
 				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-
-				const text = editor.getSelection();
-				const  response = await sendMessageToChat(text);
-				editor.replaceSelection(response.text);
-
-				//editor.replaceSelection('Sample Editor Command');
 			}
 		});
 		// This adds a complex command that can check whether the current state of the app allows execution of the command
@@ -71,18 +57,16 @@ export default class ShinLapediaPlugin extends Plugin {
 			console.log('File created:', file);
 			// You can perform actions here, like initializing AI for the new file
 			if (file instanceof TFile && file.extension === 'md') {
-
+				//Obsidianを立ち上げた場合にも呼び出されているため、ファイルの内容が空の場合だけ処理をするべき
+				if(file.stat.size > 0) {
+					console.log(`ファイル ${file.path} は既に存在します。AIによる処理は行いません。`);
+					return;
+				}
                 console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
-
-                // ファイルの内容を読み込む
-                const currentContent = await this.app.vault.read(file);
-
-				const  response = await sendMessageToChat(`${file.basename}の意味を説明してください`);
-                // 新しい内容を追加
-                const newContent = currentContent + `\r\n${file.basename}\r\n====\r\n${response.text}\r\n`;
-
-                // ファイルに新しい内容を書き込む
-                await this.app.vault.modify(file, newContent);
+				//ファイルは空の前提
+				const  definition = await getWordDefinition(file.basename);
+				//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
+				await this.app.vault.append(file,`${file.basename}\r\n====\r\n${definition}\r\n`);
                 console.log(`ファイル ${file.path} に内容を追加しました。`);
 			}	
 		}));

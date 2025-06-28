@@ -1,19 +1,22 @@
-
-import { GoogleGenAI, GenerateContentResponse, Chat, GroundingMetadata } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
-const GEMINI_TEXT_MODEL = "gemini-2.5-flash-preview-04-17";
-
+const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
 
 let ai: GoogleGenAI | null = null;
 
 export const initializeGeminiAI = (apiKey: string): void => {
   if (apiKey) {
-    ai = new GoogleGenAI({ apiKey: apiKey });
+    try{
+      ai = new GoogleGenAI({ apiKey: apiKey });
+    }catch (error) {
+      console.error("Gemini AIの初期化中にエラーが発生しました:", error);
+      console.error('APIキー:', apiKey);
+      alert("Gemini AIの初期化に失敗しました。APIキーを確認してください。");
+      ai = null;
+      throw error;
+    }
   }
-
-  //暫定的にチャット用エージェントの開始
-  startChat();
 };
 
 const checkApiKey = (): boolean => {
@@ -25,41 +28,19 @@ const checkApiKey = (): boolean => {
   return true;
 };
 
-let chatInstance: Chat | null = null;
 
-export const startChat = (): void => {
-    if (!checkApiKey() || !ai) return;
-    if (!chatInstance) {
-        chatInstance = ai.chats.create({
-            model: GEMINI_TEXT_MODEL,
-            config: {
-                systemInstruction: 'あなたはぬいぐるみ系VTuber「げんじゃ」です。語尾に「わん」とつけます。フレンドリーかつ的確に回答してください。',
-            },
-        });
-    }
-};
-
-export const sendMessageToChat = async (message: string): Promise<{text: string, groundingMetadata?: GroundingMetadata}> => {
-    if (!checkApiKey() || !ai ) throw new Error(API_KEY_ERROR_MESSAGE);
-    if (!chatInstance) {
-        startChat(); // Ensure chat is initialized
-        if (!chatInstance) throw new Error("チャットセッションの開始に失敗しました。");
-    }
-    
-    const useGoogleSearch = message.toLowerCase().includes("最新情報") || message.toLowerCase().includes("ニュース");
+export const getWordDefinition = async (word: string): Promise<string> => {
+    if (!checkApiKey() || !ai) throw new Error(API_KEY_ERROR_MESSAGE);
 
     try {
-        const response: GenerateContentResponse = await chatInstance.sendMessage({
-            message: message,
-            config: useGoogleSearch ? { tools: [{googleSearch: {}}] } : {}
+        const result = await ai.models.generateContent({
+            model: GEMINI_TEXT_MODEL,
+            contents: `「${word}」の意味を教えてください。`,
         });
-
-        return {
-          text: response.text ?? "AIからの応答がありません。",
-          groundingMetadata: response.candidates?.[0]?.groundingMetadata
-        };
+        const response = result;
+        return response.text ?? "単語の意味が見つかりませんでした。";
     } catch (error) {
-        console.error("チャットメッセージ送信中にAIエラーが発生しました:", error);
+        console.error(`単語「${word}」の意味取得中にAIエラーが発生しました:`, error);
         throw error;
     }
 };
