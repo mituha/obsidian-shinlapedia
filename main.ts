@@ -84,8 +84,8 @@ export default class ShinLapediaPlugin extends Plugin {
 
 		//APIキーがある場合、AIエージェントの初期化を行う。
 		if (this.settings.geminApiKey && this.settings.geminApiKey !== 'default') {
-			initializeGeminiAI(this.settings.geminApiKey);
-			console.log('Gemini AI initialized with provided API key.');
+				initializeGeminiAI(this.settings.geminApiKey, this.settings);
+				console.log('Gemini AI initialized with provided API key.');
 		} else {
 			console.warn('No valid Gemini API key found. AI features may not work as expected.');
 		}
