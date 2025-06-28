@@ -63,12 +63,26 @@ export default class ShinLapediaPlugin extends Plugin {
 					return;
 				}
                 console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
-				//ファイルは空の前提
-				const  definition = await getWordDefinition(file.basename);
-				//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
-				await this.app.vault.append(file,`${definition}\n`);
-                console.log(`ファイル ${file.path} に内容を追加しました。`);
-			}	
+				//処理に時間がかかるため、ユーザーに視覚的に通知
+				try{
+					document.body.style.cursor = 'wait';
+					const notice = new Notice(`ファイル ${file.path} の内容をAIで生成しています...`);
+
+					//ファイルは空の前提
+					const  definition = await getWordDefinition(file.basename);
+					//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
+					await this.app.vault.append(file,`${definition}\n`);
+					console.log(`ファイル ${file.path} に内容を追加しました。`);
+
+					//通知を消す
+					notice.hide();
+				}catch(error){
+					console.error(`ファイル ${file.path} の内容生成中にエラーが発生しました:`, error);
+					new Notice(`ファイル ${file.path} の内容生成中にエラーが発生しました。コンソールを確認してください。`);
+				}finally{
+					document.body.style.cursor = 'default';
+				}
+			}
 		}));
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
