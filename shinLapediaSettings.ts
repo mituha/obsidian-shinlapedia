@@ -1,10 +1,20 @@
 
 export interface ShinLapediaPluginSettings {
-	mySetting: string;
 	geminApiKey: string;
+
+	bookTitle: string;
+	bookDescription: string;
+
+	authorName: string;
+	authorDescription: string;
 }
 
 export const DEFAULT_SETTINGS: ShinLapediaPluginSettings = {
-	mySetting: 'default',
-	geminApiKey: 'default'
+	geminApiKey: 'default',
+
+	bookTitle: '',
+	bookDescription: '',
+
+	authorName: '',
+	authorDescription: ''
 }
