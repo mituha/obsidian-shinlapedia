@@ -82,4 +82,48 @@ export class LexicalEntry {
         this.createdAt = options.createdAt || new Date();
         this.updatedAt = options.updatedAt || new Date();
     }
+
+    public static getJSONSchema() {
+        return {
+            type: "OBJECT",
+            properties: {
+                lemma: { type: "STRING", description: "見出し語" },
+                reading: { type: "STRING", description: "語の読み方や発音" },
+                partOfSpeech: { type: "STRING", description: "品詞" },
+                definitions: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                    description: "語の定義の配列"
+                },
+                examples: {
+                    type: "ARRAY",
+                    items: {
+                        type: "OBJECT",
+                        properties: {
+                            sentence: { type: "STRING" },
+                            source: { type: "STRING" }
+                        },
+                        required: ["sentence"]
+                    },
+                    description: "例文"
+                },
+                synonyms: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                    description: "類義語"
+                },
+                antonyms: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                    description: "対義語"
+                },
+                tags: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                    description: "タグやラベル"
+                }
+            },
+            required: ["lemma", "partOfSpeech", "definitions"]
+        };
+    }
 }
