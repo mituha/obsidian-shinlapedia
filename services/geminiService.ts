@@ -1,6 +1,7 @@
-import { GoogleGenAI, Chat } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
+import { LexicalEntryFormatter } from "formatters/lexicalEntryFormatter";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
 const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
@@ -63,32 +64,6 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
 };
 
 export const getWordDefinition = async (word: string): Promise<string> => {
-    if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
-
-    try {
-        let prompt = `「${word}」の意味を教えてください。`;
-
-        if (pluginSettings.bookTitle) {
-            prompt += ` 辞書「${pluginSettings.bookTitle}」の文脈で説明してください。`;
-        }
-        if (pluginSettings.bookDescription) {
-            prompt += ` 辞書の説明: ${pluginSettings.bookDescription}。`;
-        }
-        if (pluginSettings.authorName) {
-            prompt += ` 著者「${pluginSettings.authorName}」の視点から説明してください。`;
-        }
-        if (pluginSettings.authorDescription) {
-            prompt += ` 著者の説明: ${pluginSettings.authorDescription}。`;
-        }
-
-        const result = await ai.models.generateContent({
-            model: GEMINI_TEXT_MODEL,
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-        });
-        const response = result;
-        return response.text ?? "単語の意味が見つかりませんでした。";
-    } catch (error) {
-        console.error(`単語「${word}」の意味取得中にAIエラーが発生しました:`, error);
-        throw error;
-    }
+    const entry = await getLexicalEntry(word);
+    return LexicalEntryFormatter.toMarkdown(entry);
 };
