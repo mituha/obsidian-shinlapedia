@@ -29,20 +29,24 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
 
     try {
-        let prompt = `「${word}」について、以下のJSONスキーマに従って日本語で詳細な語彙情報を生成してください。`;
+        let prompt = `あなたは辞典の編纂者です`;
+
+        prompt += `\n「${word}」について、以下のJSONスキーマに従って日本語で詳細な語彙情報を生成してください。`;
 
         if (pluginSettings.bookTitle) {
-            prompt += ` 辞書「${pluginSettings.bookTitle}」の文脈で説明してください。`;
+            prompt += `\n 辞典「${pluginSettings.bookTitle}」の文脈で説明してください。`;
         }
         if (pluginSettings.bookDescription) {
-            prompt += ` 辞書の説明: ${pluginSettings.bookDescription}。`;
+            prompt += `\n 辞典の説明: ${pluginSettings.bookDescription}。`;
         }
         if (pluginSettings.authorName) {
-            prompt += ` 著者「${pluginSettings.authorName}」の視点から説明してください。`;
+            prompt += `\n 編纂者「${pluginSettings.authorName}」の視点から説明してください。`;
         }
         if (pluginSettings.authorDescription) {
-            prompt += ` 著者の説明: ${pluginSettings.authorDescription}。`;
+            prompt += `\n 編纂者の説明: ${pluginSettings.authorDescription}。`;
         }
+        //TODO 架空度合いを追加する？
+        prompt += `\n\n独自の意味以外に一般的な意味がある場合はわかるように併記してください。`;
 
         const result = await ai.models.generateContent({
             model: GEMINI_TEXT_MODEL,

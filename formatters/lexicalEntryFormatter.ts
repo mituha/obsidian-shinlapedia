@@ -35,7 +35,14 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
 
-        // 4. 例文
+        // 4. 語源
+        if (entry.etymology) {
+            parts.push('## 語源');
+            parts.push(entry.etymology);
+            parts.push('');
+        }
+
+        // 5. 例文
         if (entry.examples && entry.examples.length > 0) {
             parts.push('## 例文');
             entry.examples.forEach(ex => {
@@ -47,7 +54,7 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
 
-        // 5. 類義語
+        // 6. 類義語
         if (entry.synonyms && entry.synonyms.length > 0) {
             parts.push('## 類義語');
             //簡易的にwikiリンク形式でリンクを張れるようにしておく
@@ -55,7 +62,7 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
 
-        // 6. 対義語
+        // 7. 対義語
         if (entry.antonyms && entry.antonyms.length > 0) {
             parts.push('## 対義語');
             //簡易的にwikiリンク形式でリンクを張れるようにしておく
@@ -63,7 +70,7 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
         
-        // 7. タグ
+        // 8. タグ
         if (entry.tags && entry.tags.length > 0) {
             parts.push('---');
             parts.push(entry.tags.map(t => `#${t}`).join(' '));

@@ -33,6 +33,11 @@ export class LexicalEntry {
     examples?: { sentence: string; source?: string }[];
 
     /**
+     * 語源
+     */
+    etymology?: string;
+
+    /**
      * 類義語
      */
     synonyms?: string[];
@@ -68,6 +73,7 @@ export class LexicalEntry {
             synonyms?: string[];
             antonyms?: string[];
             tags?: string[];
+            etymology?: string;
             createdAt?: Date;
             updatedAt?: Date;
         } = {}
@@ -81,6 +87,7 @@ export class LexicalEntry {
         this.synonyms = options.synonyms;
         this.antonyms = options.antonyms;
         this.tags = options.tags;
+        this.etymology = options.etymology;
         this.createdAt = options.createdAt || new Date();
         this.updatedAt = options.updatedAt || new Date();
     }
@@ -119,6 +126,7 @@ export class LexicalEntry {
                     items: { type: "STRING" },
                     description: "対義語"
                 },
+                etymology: { type: "STRING", description: "語源" },
                 tags: {
                     type: "ARRAY",
                     items: { type: "STRING" },
@@ -141,6 +149,7 @@ export class LexicalEntry {
                 synonyms: json.synonyms,
                 antonyms: json.antonyms,
                 tags: json.tags,
+                etymology: json.etymology,
             }
         );
     }
