@@ -50,14 +50,16 @@ export class LexicalEntryFormatter {
         // 5. 類義語
         if (entry.synonyms && entry.synonyms.length > 0) {
             parts.push('## 類義語');
-            parts.push(entry.synonyms.map(s => `- ${s}`).join('\n'));
+            //簡易的にwikiリンク形式でリンクを張れるようにしておく
+            parts.push(entry.synonyms.map(s => `- [[${s}]]`).join('\n'));
             parts.push('');
         }
 
         // 6. 対義語
         if (entry.antonyms && entry.antonyms.length > 0) {
             parts.push('## 対義語');
-            parts.push(entry.antonyms.map(a => `- ${a}`).join('\n'));
+            //簡易的にwikiリンク形式でリンクを張れるようにしておく
+            parts.push(entry.antonyms.map(a => `- [[${a}]]`).join('\n'));
             parts.push('');
         }
         
