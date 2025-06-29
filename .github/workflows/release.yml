@@ -70,11 +70,12 @@ jobs:
         with:
           # アップロードするファイルのパスを列挙
           # ZIPファイルもここに追加して一緒にアップロード
+          # filesの中(後ろ)にコメントを含むとそこまでファイル名扱いにされてそう。
           files: |
             main.js
             styles.css
             manifest.json
-            ${{ env.ZIP_FILE_NAME }} # 5で作成したZIPファイルを指定
+            ${{ env.ZIP_FILE_NAME }}
         # GitHubが提供する自動生成トークンを使用
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
