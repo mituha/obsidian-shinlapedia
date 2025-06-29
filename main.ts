@@ -80,7 +80,7 @@ export default class ShinLapediaPlugin extends Plugin {
 					console.error(`ファイル ${file.path} の内容生成中にエラーが発生しました:`, error);
 					new Notice(`ファイル ${file.path} の内容生成中にエラーが発生しました。コンソールを確認してください。`);
 				}finally{
-					document.body.style.cursor = 'default';
+					document.body.style.cursor = 'auto'; // カーソルを元に戻す 'default'では駄目っぽい
 				}
 			}
 		}));
