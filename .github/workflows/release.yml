@@ -17,6 +17,9 @@ jobs:
   release:
     # 実行環境 (Ubuntu Linux)
     runs-on: ubuntu-latest
+    # このジョブに必要な権限を明示的に指定
+    permissions:
+      contents: write # リリースを作成し、アセットをアップロードするために必要
 
     # ジョブのステップ
     steps:
