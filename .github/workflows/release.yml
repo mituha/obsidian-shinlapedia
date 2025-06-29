@@ -1,0 +1,76 @@
+# ワークフローの名前
+name: Release Obsidian Plugin
+
+# ワークフローがトリガーされるイベント
+on:
+  workflow_dispatch: # 手動でトリガー可能
+  push:              # master ブランチへのプッシュでビルドが実行され、動作確認に使える
+    branches:
+      - master # ご自身のメインブランチ名に合わせて変更してください (例: master)
+  release:          # GitHubで新しいリリースが公開されたときにトリガーされる
+    types: [published]
+
+# 実行されるジョブの定義
+jobs:
+  release:
+    # 実行環境 (Ubuntu Linux)
+    runs-on: ubuntu-latest
+
+    # ジョブのステップ
+    steps:
+      # 1. リポジトリのチェックアウト
+      # GitHub Actionsがリポジトリのコードにアクセスできるようにする
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Node.jsのセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x' # とりあえず、ローカル環境に合わせた最新で試す。
+
+      # 3. 依存関係のインストール
+      # package.json に基づいて依存関係をインストールする
+      - name: Install dependencies
+        run: npm ci # 'npm ci' は CI 環境で推奨される、クリーンな依存関係インストール
+
+      # 4. プラグインのビルド
+      # package.json の 'scripts' セクションに 'build' コマンドがあることを前提とする
+      # 例: "scripts": { "build": "tsc" }
+      - name: Build plugin
+        run: npm run build
+
+      # 5. リリース用のZIPファイルの作成 (オプション)
+      # リリースが公開された場合にのみ実行される
+      - name: Create release zip file
+        # 'if' 条件で、このステップがリリース公開イベントでのみ実行されるようにする
+        if: github.event_name == 'release' && github.event.action == 'published'
+        run: |
+          # リリース名とタグ名からZIPファイル名を決定
+          # 例: my-obsidian-plugin-1.0.0.zip
+          ZIP_FILE_NAME="${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.zip"
+          # main.js, styles.css, manifest.json をZIPに圧縮
+          # これらのファイルがビルド後にリポジトリのルートディレクトリにあることを前提
+          # もし dist/ など別のディレクトリにある場合はパスを調整してください (例: zip -r $ZIP_FILE_NAME dist/main.js ...)
+          zip -r "$ZIP_FILE_NAME" main.js styles.css manifest.json
+          # 後続のステップでZIPファイル名を使用するために環境変数に保存
+          echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
+
+      # 6. リリースアセットのアップロード
+      # 新しいリリースが公開された場合にのみ実行される
+      - name: Upload Release Assets
+        # 'if' 条件で、このステップがリリース公開イベントでのみ実行されるようにする
+        if: github.event_name == 'release' && github.event.action == 'published'
+        # softprops/action-gh-release アクションを使用して、ファイルをGitHubリリースにアップロードする
+        uses: softprops/action-gh-release@v1
+        with:
+          # アップロードするファイルのパスを列挙
+          # ZIPファイルもここに追加して一緒にアップロード
+          files: |
+            main.js
+            styles.css
+            manifest.json
+            ${{ env.ZIP_FILE_NAME }} # 5で作成したZIPファイルを指定
+        # GitHubが提供する自動生成トークンを使用
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
