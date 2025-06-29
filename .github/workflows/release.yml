@@ -6,7 +6,9 @@ on:
   workflow_dispatch: # 手動でトリガー可能
   push:              # master ブランチへのプッシュでビルドが実行され、動作確認に使える
     branches:
-      - master # ご自身のメインブランチ名に合わせて変更してください (例: master)
+      - master 
+    tags:
+      - '*.*.*' # 例: 1.0.0, 0.15.0 など、Obsidianのプラグインとしては'v'を付けないドット区切りの数字で表す。
   release:          # GitHubで新しいリリースが公開されたときにトリガーされる
     types: [published]
 
@@ -55,6 +57,8 @@ jobs:
           zip -r "$ZIP_FILE_NAME" main.js styles.css manifest.json
           # 後続のステップでZIPファイル名を使用するために環境変数に保存
           echo "ZIP_FILE_NAME=$ZIP_FILE_NAME" >> $GITHUB_ENV
+          # 後続のステップでZIPファイルが見つからないため確認。
+          ls
 
       # 6. リリースアセットのアップロード
       # 新しいリリースが公開された場合にのみ実行される
