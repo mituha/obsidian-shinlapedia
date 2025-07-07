@@ -10,19 +10,23 @@ let ai: GoogleGenAI | null = null;
 let pluginSettings: ShinLapediaPluginSettings | null = null;
 
 export const initializeGeminiAI = (apiKey: string, settings: ShinLapediaPluginSettings): void => {
-  if (apiKey) {
-    ai = new GoogleGenAI({ apiKey: apiKey });
-    pluginSettings = settings;
-  }
+    if (!apiKey || apiKey.trim() === "") {
+        //APIキーが設定されていない場合、環境変数からの取得を試みる。
+        apiKey = process.env.GEMINI_API_KEY || '';
+    }
+    if (apiKey) {
+        ai = new GoogleGenAI({ apiKey: apiKey });
+        pluginSettings = settings;
+    }
 };
 
 const checkApiKey = (): boolean => {
-  if (!ai) {
-    console.error(API_KEY_ERROR_MESSAGE);
-    alert(API_KEY_ERROR_MESSAGE);
-    return false;
-  }
-  return true;
+    if (!ai) {
+        console.error(API_KEY_ERROR_MESSAGE);
+        alert(API_KEY_ERROR_MESSAGE);
+        return false;
+    }
+    return true;
 };
 
 export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
