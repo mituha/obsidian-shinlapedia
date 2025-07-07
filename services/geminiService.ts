@@ -56,6 +56,8 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
         prompt += `\n\n意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。`;
         prompt += `\n\n意味、フレーバーテキストの項目は冗長になりすぎないように140文字以内で記述してください。`;
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。`;
+        prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
+        prompt += `\n\n類義語、対義語、関連語の項目のリンク記述は不要です。`;
 
         const result = await ai.models.generateContent({
             model: GEMINI_TEXT_MODEL,
