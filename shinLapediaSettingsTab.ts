@@ -24,7 +24,17 @@ export class ShinLapediaSettingsTab extends PluginSettingTab {
 					this.plugin.settings.geminApiKey = value;
 					await this.plugin.saveSettings();
 				}));
-
+		//辞典用のフォルダーを制限する場合
+		new Setting(containerEl)
+			.setName('辞典用のフォルダー制限')
+			.setDesc('辞典を保存するフォルダーを指定します')
+			.addText(text => text
+				.setPlaceholder('辞典を保存するフォルダーを入力')
+				.setValue(this.plugin.settings.bookFolder)
+				.onChange(async (value) => {
+					this.plugin.settings.bookFolder = value;
+					await this.plugin.saveSettings();
+				}));
 		//辞典の設定
 		new Setting(containerEl)
 			.setName('辞典の名前')

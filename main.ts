@@ -2,6 +2,7 @@ import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidia
 import { initializeGeminiAI , getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
+import path from 'path';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -62,6 +63,19 @@ export default class ShinLapediaPlugin extends Plugin {
 					console.log(`ファイル ${file.path} は既に存在します。AIによる処理は行いません。`);
 					return;
 				}
+				if (this.settings.bookFolder) {
+					let bookFolder = this.settings.bookFolder;
+					if(!bookFolder.endsWith('/')){
+						bookFolder += '/'; // フォルダーのパスがスラッシュで終わっていない場合、追加する					
+					}
+					const filePath = path.dirname(file.path) + '/'; // ファイルのパスからフォルダーを取得
+					console.log(`ファイルのフォルダー: ${filePath}`);
+					if (!filePath.startsWith(bookFolder)) {
+						console.log(`ファイル ${file.path} は指定されたフォルダー外にあります。AIによる処理は行いません。`);
+						return;
+					}
+				}
+
                 console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
 				//処理に時間がかかるため、ユーザーに視覚的に通知
 				try{
