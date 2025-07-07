@@ -35,6 +35,13 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
 
+        // フレーバーテキスト
+        if (entry.flavorText) {
+            parts.push('---');
+            parts.push(`> ${entry.flavorText.replace(/\n/g, '\n> ')}`);
+            parts.push('');
+        }
+
         // 4. 語源
         if (entry.etymology) {
             parts.push('## 語源');

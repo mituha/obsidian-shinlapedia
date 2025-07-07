@@ -26,6 +26,10 @@ export class LexicalEntry {
      * 語の定義の配列
      */
     definitions: string[];
+    /**
+     * フレーバーテキストや補足情報
+     */
+    flavorText?: string;
 
     /**
      * 例文
@@ -69,6 +73,7 @@ export class LexicalEntry {
         definitions: string[],
         options: {
             reading?: string;
+            flavorText?: string;
             examples?: { sentence: string; source?: string }[];
             synonyms?: string[];
             antonyms?: string[];
@@ -83,6 +88,7 @@ export class LexicalEntry {
         this.partOfSpeech = partOfSpeech;
         this.definitions = definitions;
         this.reading = options.reading;
+        this.flavorText = options.flavorText;
         this.examples = options.examples;
         this.synonyms = options.synonyms;
         this.antonyms = options.antonyms;
@@ -104,6 +110,7 @@ export class LexicalEntry {
                     items: { type: "STRING" },
                     description: "語の定義の配列"
                 },
+                flavorText: { type: "STRING", description: "フレーバーテキストや補足情報" },
                 examples: {
                     type: "ARRAY",
                     items: {
@@ -145,6 +152,7 @@ export class LexicalEntry {
             json.definitions,
             {
                 reading: json.reading,
+                flavorText: json.flavorText,
                 examples: json.examples,
                 synonyms: json.synonyms,
                 antonyms: json.antonyms,

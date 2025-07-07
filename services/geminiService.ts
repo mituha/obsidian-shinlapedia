@@ -9,15 +9,17 @@ const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
 let ai: GoogleGenAI | null = null;
 let pluginSettings: ShinLapediaPluginSettings | null = null;
 
-export const initializeGeminiAI = (apiKey: string, settings: ShinLapediaPluginSettings): void => {
+export const initializeGeminiAI = (apiKey: string, settings: ShinLapediaPluginSettings): boolean => {
     if (!apiKey || apiKey.trim() === "") {
         //APIキーが設定されていない場合、環境変数からの取得を試みる。
         apiKey = process.env.GEMINI_API_KEY || '';
     }
-    if (apiKey) {
-        ai = new GoogleGenAI({ apiKey: apiKey });
-        pluginSettings = settings;
+    if (!apiKey || apiKey.trim() === "") {
+        return false;
     }
+    ai = new GoogleGenAI({ apiKey: apiKey });
+    pluginSettings = settings;
+    return true;
 };
 
 const checkApiKey = (): boolean => {
@@ -49,8 +51,11 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
         if (pluginSettings.authorDescription) {
             prompt += `\n 編纂者の説明: ${pluginSettings.authorDescription}。`;
         }
-        //TODO 架空度合いを追加する？
-        prompt += `\n\n独自の意味以外に一般的な意味がある場合はわかるように併記してください。`;
+        prompt += `\n\n基本的にこの辞典特有の意味を優先します。`;
+        prompt += `\n\n一般的な意味がある場合はわかるように併記してください。`;
+        prompt += `\n\n意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。`;
+        prompt += `\n\n意味、フレーバーテキストの項目は冗長になりすぎないように140文字以内で記述してください。`;
+        prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。`;
 
         const result = await ai.models.generateContent({
             model: GEMINI_TEXT_MODEL,

@@ -1,5 +1,5 @@
 import { App, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
-import { initializeGeminiAI , getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
+import { initializeGeminiAI, getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
@@ -54,18 +54,18 @@ export default class ShinLapediaPlugin extends Plugin {
 		this.addSettingTab(new ShinLapediaSettingsTab(this.app, this));
 
 		//ファイル新規作成時のイベントを確認
-		this.registerEvent(this.app.vault.on("create",async (file) => {
+		this.registerEvent(this.app.vault.on("create", async (file) => {
 			console.log('File created:', file);
 			// You can perform actions here, like initializing AI for the new file
 			if (file instanceof TFile && file.extension === 'md') {
 				//Obsidianを立ち上げた場合にも呼び出されているため、ファイルの内容が空の場合だけ処理をするべき
-				if(file.stat.size > 0) {
+				if (file.stat.size > 0) {
 					console.log(`ファイル ${file.path} は既に存在します。AIによる処理は行いません。`);
 					return;
 				}
 				if (this.settings.bookFolder) {
 					let bookFolder = this.settings.bookFolder;
-					if(!bookFolder.endsWith('/')){
+					if (!bookFolder.endsWith('/')) {
 						bookFolder += '/'; // フォルダーのパスがスラッシュで終わっていない場合、追加する					
 					}
 					const filePath = path.dirname(file.path) + '/'; // ファイルのパスからフォルダーを取得
@@ -76,24 +76,24 @@ export default class ShinLapediaPlugin extends Plugin {
 					}
 				}
 
-                console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
+				console.log(`新しいMarkdownファイルが作成されました: ${file.path}`);
 				//処理に時間がかかるため、ユーザーに視覚的に通知
-				try{
+				try {
 					document.body.style.cursor = 'wait';
 					const notice = new Notice(`ファイル ${file.path} の内容をAIで生成しています...`);
 
 					//ファイルは空の前提
-					const  definition = await getWordDefinition(file.basename);
+					const definition = await getWordDefinition(file.basename);
 					//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
-					await this.app.vault.append(file,`${definition}\n`);
+					await this.app.vault.append(file, `${definition}\n`);
 					console.log(`ファイル ${file.path} に内容を追加しました。`);
 
 					//通知を消す
 					notice.hide();
-				}catch(error){
+				} catch (error) {
 					console.error(`ファイル ${file.path} の内容生成中にエラーが発生しました:`, error);
 					new Notice(`ファイル ${file.path} の内容生成中にエラーが発生しました。コンソールを確認してください。`);
-				}finally{
+				} finally {
 					document.body.style.cursor = 'auto'; // カーソルを元に戻す 'default'では駄目っぽい
 				}
 			}
@@ -111,9 +111,8 @@ export default class ShinLapediaPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
 		//APIキーがある場合、AIエージェントの初期化を行う。
-		if (this.settings.geminApiKey && this.settings.geminApiKey !== 'default') {
-				initializeGeminiAI(this.settings.geminApiKey, this.settings);
-				console.log('Gemini AI initialized with provided API key.');
+		if (initializeGeminiAI(this.settings.geminApiKey, this.settings)) {
+			console.log('Gemini AI initialized with provided API key.');
 		} else {
 			console.warn('No valid Gemini API key found. AI features may not work as expected.');
 		}
@@ -130,12 +129,12 @@ class SampleModal extends Modal {
 	}
 
 	onOpen() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.setText('Woah!');
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
