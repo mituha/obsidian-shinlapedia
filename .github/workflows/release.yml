@@ -4,9 +4,7 @@ name: Release Obsidian Plugin
 # ワークフローがトリガーされるイベント
 on:
   workflow_dispatch: # 手動でトリガー可能
-  push:              # master ブランチへのプッシュでビルドが実行され、動作確認に使える
-    branches:
-      - master 
+  push:              # ブランチとタグの両方指定はどちらかだけになるためタグのみ指定
     tags:
       - '*.*.*' # 例: 1.0.0, 0.15.0 など、Obsidianのプラグインとしては'v'を付けないドット区切りの数字で表す。
   release:          # GitHubで新しいリリースが公開されたときにトリガーされる

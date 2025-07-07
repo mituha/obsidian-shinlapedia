@@ -1,8 +1,8 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
+import { App, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { initializeGeminiAI , getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
-import path from 'path';
+import * as path from 'path';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
