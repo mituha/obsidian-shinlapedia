@@ -3,6 +3,7 @@ import { initializeGeminiAI, getWordDefinition } from './services/geminiService'
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
+import { FileNameModal } from './ui/FileNameModal';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -21,34 +22,6 @@ export default class ShinLapediaPlugin extends Plugin {
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
 
 		this.addCommand({
 			id: 'create-new-shinlapedia-file',
@@ -149,78 +122,6 @@ export default class ShinLapediaPlugin extends Plugin {
 			new Notice(`Error creating file: ${error}`);
 			console.error(`Error creating file:`, error);
 		}
-	}
-}
-
-class FileNameModal extends Modal {
-	fileName: string;
-	settings: ShinLapediaPluginSettings;
-	onSubmit: (fileName: string) => void;
-
-	constructor(app: App, settings: ShinLapediaPluginSettings, onSubmit: (fileName: string) => void) {
-		super(app);
-		this.settings = settings;
-		this.onSubmit = onSubmit;
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.createEl('h2', { text: '新しいファイルを作成' });
-
-		new Setting(contentEl)
-			.setName('ファイル名')
-			.addText((text) => {
-				text.onChange((value) => {
-					this.fileName = value;
-				});
-				text.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
-					if (e.key === 'Enter') {
-						e.preventDefault();
-						this.submitForm();
-					}
-				});
-			});
-
-		new Setting(contentEl)
-			.addButton((btn) =>
-				btn
-					.setButtonText('作成')
-					.setCta()
-					.onClick(() => {
-						this.submitForm();
-					})
-			);
-	}
-
-	submitForm() {
-		if (this.fileName) {
-			this.onSubmit(this.fileName);
-			this.close();
-		} else {
-			new Notice('ファイル名を入力してください。');
-		}
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
-	}
-}
-
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }
 
