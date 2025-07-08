@@ -24,8 +24,8 @@ export default class ShinLapediaPlugin extends Plugin {
 		statusBarItemEl.setText('Status Bar Text');
 
 		this.addCommand({
-			id: 'create-new-shinlapedia-file',
-			name: '万象言海: 新規ファイル作成',
+			id: 'create-new-shinlapedia-entry',
+			name: '新規単語作成',
 			callback: () => {
 				new FileNameModal(this.app, this.settings, (fileName) => {
 					this.createShinLapediaFile(fileName);
@@ -113,6 +113,18 @@ export default class ShinLapediaPlugin extends Plugin {
 		let filePath = fileName;
 		if (this.settings.bookFolder) {
 			filePath = path.join(this.settings.bookFolder, fileName);
+		}
+
+		// ファイルが存在するかチェックするわん
+		const fileExists = await this.app.vault.adapter.exists(filePath);
+
+		if (fileExists) {
+			console.warn(`わん！ファイル '${filePath}' は既に存在するわん。既存のファイルを開くわん。`);
+			const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+			if (existingFile instanceof TFile) {
+				this.app.workspace.getLeaf('tab').openFile(existingFile);
+			}
+			return; // 処理を終了するわん
 		}
 
 		try {

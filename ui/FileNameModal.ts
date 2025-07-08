@@ -14,10 +14,10 @@ export class FileNameModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl('h2', { text: '新しいファイルを作成' });
+        contentEl.createEl('h2', { text: '新しい単語を作成' });
 
         new Setting(contentEl)
-            .setName('ファイル名')
+            .setName('単語')
             .addText((text) => {
                 text.onChange((value) => {
                     this.fileName = value;
