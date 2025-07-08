@@ -1,4 +1,4 @@
-import { App, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
+import { App, MarkdownView, Modal, Notice, Plugin, TFile, Setting } from 'obsidian';
 import { initializeGeminiAI, getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
@@ -47,6 +47,16 @@ export default class ShinLapediaPlugin extends Plugin {
 					// This command will only show up in Command Palette when the check function returns true
 					return true;
 				}
+			}
+		});
+
+		this.addCommand({
+			id: 'create-new-shinlapedia-file',
+			name: '万象言海: 新規ファイル作成',
+			callback: () => {
+				new FileNameModal(this.app, this.settings, (fileName) => {
+					this.createShinLapediaFile(fileName);
+				}).open();
 			}
 		});
 
@@ -121,7 +131,82 @@ export default class ShinLapediaPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	async createShinLapediaFile(fileName: string) {
+		if (!fileName.endsWith('.md')) {
+			fileName += '.md';
+		}
+
+		let filePath = fileName;
+		if (this.settings.bookFolder) {
+			filePath = path.join(this.settings.bookFolder, fileName);
+		}
+
+		try {
+			const file = await this.app.vault.create(filePath, '');
+			this.app.workspace.getLeaf(true).openFile(file);
+		} catch (error) {
+			new Notice(`Error creating file: ${error}`);
+			console.error(`Error creating file:`, error);
+		}
+	}
 }
+
+class FileNameModal extends Modal {
+	fileName: string;
+	settings: ShinLapediaPluginSettings;
+	onSubmit: (fileName: string) => void;
+
+	constructor(app: App, settings: ShinLapediaPluginSettings, onSubmit: (fileName: string) => void) {
+		super(app);
+		this.settings = settings;
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.createEl('h2', { text: '新しいファイルを作成' });
+
+		new Setting(contentEl)
+			.setName('ファイル名')
+			.addText((text) => {
+				text.onChange((value) => {
+					this.fileName = value;
+				});
+				text.inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						this.submitForm();
+					}
+				});
+			});
+
+		new Setting(contentEl)
+			.addButton((btn) =>
+				btn
+					.setButtonText('作成')
+					.setCta()
+					.onClick(() => {
+						this.submitForm();
+					})
+			);
+	}
+
+	submitForm() {
+		if (this.fileName) {
+			this.onSubmit(this.fileName);
+			this.close();
+		} else {
+			new Notice('ファイル名を入力してください。');
+		}
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+}
+
 
 class SampleModal extends Modal {
 	constructor(app: App) {
