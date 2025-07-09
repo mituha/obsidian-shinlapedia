@@ -82,8 +82,67 @@ export default class ShinLapediaPlugin extends Plugin {
 			}
 		}));
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		//ルビの表示
+		console.log('ルビの表示を登録するわん！');
+		this.registerMarkdownPostProcessor((element, context) => {
+			console.log('ルビの表示を開始するわん！');
+			// element は現在処理しているDOM要素だわん
+            // context は要素のパスなど、追加情報を持つオブジェクトだわん
+
+            // element内のテキストノードを走査して、ルビのパターンを探すわん
+            // TextNodeはelement.childNodesの中に含まれるわん
+            const textNodes = element.querySelectorAll('div,p, li, h1, h2, h3, h4, h5, h6, span'); // ルビを適用したい要素を指定するわん
+			console.log('ルビの適用を開始するわん！', textNodes);
+			if (textNodes.length === 0) { return; } // 対象の要素がなければ何もしないわん
+
+            textNodes.forEach(node => {
+                const textContent = node.textContent;
+                if (!textContent){ return; } // テキストコンテンツがなければ何もしないわん
+				console.log('ルビの適用対象のテキスト:', textContent);
+				
+                // カクヨム形式のルビの正規表現だわん
+                // |漢字《ルビ》
+                // `|` のエスケープと、`《》` のエスケープを忘れずにね
+                const regex = /\|([^《》]+)《([^》]+)》/g;
+
+                // 正規表現にマッチする部分があるかチェックするわん
+                if (regex.test(textContent)) {
+					console.log('ルビのパターンにマッチしたわん！', textContent);
+                    // マッチした場合、新しいHTML要素を生成して置き換えるわん
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+                    let match;
+
+                    while ((match = regex.exec(textContent)) !== null) {
+                        // ルビではない通常のテキスト部分を追加するわん
+                        if (match.index > lastIndex) {
+                            fragment.appendChild(document.createTextNode(textContent.substring(lastIndex, match.index)));
+                        }
+
+                        // ルビ部分をHTMLの <ruby> <rt> 要素で作成するわん！
+                        const baseText = match[1]; // 漢字部分だわん
+                        const rubyText = match[2]; // ルビ部分だわん
+
+                        const rubyEl = document.createElement('ruby');
+                        rubyEl.appendChild(document.createTextNode(baseText)); // 漢字（親文字）
+                        const rtEl = document.createElement('rt');
+                        rtEl.appendChild(document.createTextNode(rubyText)); // ルビ
+                        rubyEl.appendChild(rtEl);
+
+                        fragment.appendChild(rubyEl); // フラグメントに追加するわん
+                        lastIndex = regex.lastIndex; // 次のマッチの開始位置を更新するわん
+                    }
+
+                    // 最後の残りのテキストを追加するわん
+                    if (lastIndex < textContent.length) {
+                        fragment.appendChild(document.createTextNode(textContent.substring(lastIndex)));
+                    }
+
+                    // 元のテキストノードを、新しく作成したHTMLフラグメントで置き換えるわん
+                    node.replaceWith(fragment);
+                }
+            });
+		});
 	}
 
 	onunload() {
