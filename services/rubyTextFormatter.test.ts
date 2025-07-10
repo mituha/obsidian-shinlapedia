@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { formatRuby } from './rubyTextFormatter';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { formatRuby, applyRubyToElement } from './rubyTextFormatter';
+import { JSDOM } from 'jsdom';
 
 describe('formatRuby', () => {
 
@@ -22,13 +23,13 @@ describe('formatRuby', () => {
             expect(formatRuby(inputText)).toBe(expectedOutput);
         });
 
-        it('全角の区切り文字「｜」を使ったルビ変換が正しく行われる���と', () => {
+        it('全角の区切り文字「｜」を使ったルビ変換が正しく行われること', () => {
             const inputText = 'これは｜漢字《かんじ》のテストです。';
             const expectedOutput = 'これは<ruby>漢字<rt>かんじ</rt></ruby>のテストです。';
             expect(formatRuby(inputText)).toBe(expectedOutput);
         });
 
-        it('半角と全角の区切り文字が混在している場合に正しく変換されること', () => {
+        it('半角と全角の区切り文字が混在している場合に正しく変換される��と', () => {
             const inputText = '|漢字《かんじ》と｜単語《たんご》のテスト。';
             const expectedOutput = '<ruby>漢字<rt>かんじ</rt></ruby>と<ruby>単語<rt>たんご</rt></ruby>のテスト。';
             expect(formatRuby(inputText)).toBe(expectedOutput);
@@ -80,7 +81,7 @@ describe('formatRuby', () => {
         });
     });
 
-    describe('一般ケース', () => {
+    describe('一般��ース', () => {
         it('ルビや傍点が含まれないテキストは変更されないこと', () => {
             const inputText = 'これは通常のテキストです。';
             expect(formatRuby(inputText)).toBe(inputText);
@@ -95,5 +96,92 @@ describe('formatRuby', () => {
             const inputText = 'これは|《》や《》、漢字《》のテストです。';
             expect(formatRuby(inputText)).toBe(inputText);
         });
+    });
+});
+
+describe('applyRubyToElement', () => {
+    let dom: JSDOM;
+    let document: Document;
+
+    beforeEach(() => {
+        dom = new JSDOM('<!DOCTYPE html>');
+        document = dom.window.document;
+        global.document = document;
+        global.NodeFilter = dom.window.NodeFilter;
+        global.HTMLElement = dom.window.HTMLElement;
+        global.Node = dom.window.Node;
+        global.DocumentFragment = dom.window.DocumentFragment;
+    });
+
+    it('単一のテキストノード内のルビ記法を正しく変換すること', () => {
+        const element = document.createElement('div');
+        element.textContent = 'これは|漢字《かんじ》のテストです。';
+        applyRubyToElement(element);
+        expect(element.innerHTML).toBe('これは<ruby>漢字<rt>かんじ</rt></ruby>のテストです。');
+    });
+
+    it('複数のテキストノードにまたがるルビ記法をそれぞれ正しく変換すること', () => {
+        const element = document.createElement('div');
+        const p1 = document.createElement('p');
+        p1.textContent = '一つ目の段落、|漢字《かんじ》。';
+        const p2 = document.createElement('p');
+        p2.textContent = '二つ目の段落、｜単語《たんご》。';
+        element.appendChild(p1);
+        element.appendChild(p2);
+
+        applyRubyToElement(element);
+
+        expect(element.innerHTML).toBe('<p>一つ目の段落、<ruby>漢字<rt>かんじ</rt></ruby>。</p><p>二つ目の段落、<ruby>単語<rt>たんご</rt></ruby>。</p>');
+    });
+
+    it('ルビと傍点が混在するテキストを正しく変換すること', () => {
+        const element = document.createElement('div');
+        element.textContent = 'これは|ルビ《るび》と《《傍点》》のテストです。';
+        applyRubyToElement(element);
+        expect(element.innerHTML).toBe('これは<ruby>ルビ<rt>るび</rt></ruby>と<em class="emphasis-dot">傍点</em>のテストです。');
+    });
+
+    it('記法が含まれないテキストは変更されないこと', () => {
+        const element = document.createElement('div');
+        const originalText = 'これは通常のテキストです。';
+        element.textContent = originalText;
+        applyRubyToElement(element);
+        expect(element.innerHTML).toBe(originalText);
+    });
+
+    it('子要素内のテキストノードも正しく変換すること', () => {
+        const element = document.createElement('div');
+        element.innerHTML = '<span>これは|スパン《span》タグの中です。</span>';
+        applyRubyToElement(element);
+        expect(element.innerHTML).toBe('<span>これは<ruby>スパン<rt>span</rt></ruby>タグの中です。</span>');
+    });
+
+    it('テキストノードが分割されていても正しく変換すること', () => {
+        const element = document.createElement('div');
+        element.appendChild(document.createTextNode('これは|分割《ぶんかつ》された'));
+        element.appendChild(document.createElement('b'));
+        element.lastChild!.textContent = 'テキスト';
+        element.appendChild(document.createTextNode('です。'));
+
+        applyRubyToElement(element);
+        expect(element.innerHTML).toBe('これは<ruby>分割<rt>ぶんかつ</rt></ruby>された<b>テキスト</b>です。');
+    });
+
+    it('空の要素に対してエラーが発生しないこと', () => {
+        const element = document.createElement('div');
+        expect(() => applyRubyToElement(element)).not.toThrow();
+    });
+
+    afterEach(() => {
+        // @ts-ignore
+        delete global.document;
+        // @ts-ignore
+        delete global.NodeFilter;
+        // @ts-ignore
+        delete global.HTMLElement;
+        // @ts-ignore
+        delete global.Node;
+        // @ts-ignore
+        delete global.DocumentFragment;
     });
 });
