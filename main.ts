@@ -4,6 +4,7 @@ import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettin
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
 import { FileNameModal } from './ui/FileNameModal';
+import { applyRubyToElement } from './services/rubyTextFormatter';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -82,8 +83,10 @@ export default class ShinLapediaPlugin extends Plugin {
 			}
 		}));
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		//ルビの表示
+		this.registerMarkdownPostProcessor((element, context) => {
+			applyRubyToElement(element);
+		});
 	}
 
 	onunload() {
