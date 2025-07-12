@@ -45,15 +45,15 @@ Obsidianのコミュニティプラグインには未登録です
 
 ### 手動
 
-1.  このリポジトリの[Releasesページ](https://github.com/mituha/shinlapedia/releases)から最新版のzipファイルをダウンロードします。
-2.  ObsidianのVault（保管庫）にある `.obsidian/plugins/` ディレクトリ内に `shinlapedia` という名前の新しいフォルダを作成します。
-3.  ダウンロードしたzipファイルを解凍して、含まれる3つのファイルを、作成した `shinlapedia` フォルダに移動します。
+1.  このリポジトリの[Releasesページ](https://github.com/mituha/obsidian-shinlapedia/releases)から最新版のzipファイルをダウンロードします。
+2.  ObsidianのVault（保管庫）にある `.obsidian/plugins/` ディレクトリ内に `obsidian-shinlapedia` という名前の新しいフォルダを作成します。
+3.  ダウンロードしたzipファイルを解凍して、含まれる3つのファイルを、作成した `obsidian-shinlapedia` フォルダに移動します。
 4.  Obsidianを再起動し、`設定` > `コミュニティプラグイン` から「万象言海」を有効化します。
 5.  設定画面でAPIキーを入力すれば完了です。
 
 ## 🤝 貢献
 
-バグ報告や機能提案は、このリポジトリの[Issues](https://github.com/mituha/shinlapedia/issues)までお気軽にどうぞ。
+バグ報告や機能提案は、このリポジトリの[Issues](https://github.com/mituha/obsidian-shinlapedia/issues)までお気軽にどうぞ。
 
 ## 📝 ライセンス
 
