@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
-import { LexicalEntryFormatter } from "formatters/lexicalEntryFormatter";
+import { LexicalEntryFormatter } from "../formatters/lexicalEntryFormatter";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
 const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
