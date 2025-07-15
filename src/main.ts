@@ -1,5 +1,5 @@
 import { App, MarkdownView, Modal, Notice, Plugin, TFile, Setting } from 'obsidian';
-import { initializeGeminiAI, getWordDefinition } from './services/geminiService'; // Import the function to initialize Gemini AI
+import { initializeGeminiAI, getWordDefinition, setApp } from './services/geminiService'; // Import the function to initialize Gemini AI
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
@@ -12,6 +12,7 @@ export default class ShinLapediaPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+		setApp(this.app);
 
 		this.registerView(
 			CHAT_VIEW_TYPE,
