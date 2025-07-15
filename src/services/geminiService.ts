@@ -82,3 +82,46 @@ export const getWordDefinition = async (word: string): Promise<string> => {
     const entry = await getLexicalEntry(word);
     return LexicalEntryFormatter.toMarkdown(entry);
 };
+
+
+export const generateChatResponse = async (userInput: string, context: string): Promise<string> => {
+    if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+
+    let prompt = `あなたは辞典の編纂者です`;
+
+    if (pluginSettings.bookTitle) {
+        prompt += `\n 辞典「${pluginSettings.bookTitle}」の文脈で説明してください。`;
+    }
+    if (pluginSettings.bookDescription) {
+        prompt += `\n 辞典の説明: ${pluginSettings.bookDescription}。`;
+    }
+    if (pluginSettings.authorName) {
+        prompt += `\n 編纂者「${pluginSettings.authorName}」の視点から説明してください。`;
+    }
+    if (pluginSettings.authorDescription) {
+        prompt += `\n 編纂者の説明: ${pluginSettings.authorDescription}。`;
+    }
+    prompt += `\n
+ユーザーは以下の単語を閲覧中です
+
+---
+${context}
+---
+
+この文脈を踏まえて、ユーザーの次の質問に日本語で回答してください。
+
+質問: "${userInput}"
+`;
+
+    try {
+        const result = await ai.models.generateContent({
+            model: GEMINI_TEXT_MODEL,
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+        return result.text || "AIからの応答が得られませんでした。";
+    } catch (error) {
+        console.error("Error generating chat response from Gemini:", error);
+        throw new Error("AIからの応答の生成に失敗しました。");
+    }
+};
+

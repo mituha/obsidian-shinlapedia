@@ -5,6 +5,7 @@ import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
 import { FileNameModal } from './ui/FileNameModal';
 import { applyRubyToElement } from './services/rubyTextFormatter';
+import { ChatView, CHAT_VIEW_TYPE } from './ui/ChatView';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
@@ -12,17 +13,26 @@ export default class ShinLapediaPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		this.registerView(
+			CHAT_VIEW_TYPE,
+			(leaf) => new ChatView(leaf, this)
+		);
+
+		this.addRibbonIcon('message-circle', 'ShinLapedia Chat', () => {
+			this.activateView();
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
 
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status Bar Text');
+
+		this.addCommand({
+			id: 'open-shinlapedia-chat-view',
+			name: '編纂者とチャット',
+			callback: () => {
+				this.activateView();
+			}
+		});
 
 		this.addCommand({
 			id: 'create-new-shinlapedia-entry',
@@ -90,7 +100,7 @@ export default class ShinLapediaPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		this.app.workspace.detachLeavesOfType(CHAT_VIEW_TYPE);
 	}
 
 	async loadSettings() {
@@ -137,6 +147,19 @@ export default class ShinLapediaPlugin extends Plugin {
 			new Notice(`Error creating file: ${error}`);
 			console.error(`Error creating file:`, error);
 		}
+	}
+
+	async activateView() {
+		this.app.workspace.detachLeavesOfType(CHAT_VIEW_TYPE);
+
+		await this.app.workspace.getRightLeaf(false)?.setViewState({
+			type: CHAT_VIEW_TYPE,
+			active: true,
+		});
+
+		this.app.workspace.revealLeaf(
+			this.app.workspace.getLeavesOfType(CHAT_VIEW_TYPE)[0]
+		);
 	}
 }
 
