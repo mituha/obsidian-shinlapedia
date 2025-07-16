@@ -39,10 +39,10 @@ const checkApiKey = (): boolean => {
 
 // --- Function Calling Tools ---
 
-const getWordList = async (): Promise<string[]> => {
+const getWordList = async (): Promise<{ words: string[] } > => {
     if (!app || !pluginSettings?.bookFolder) {
         console.warn("辞典フォルダが設定されていません。");
-        return [];
+        return {words:[]};
     }
     const folderPath = pluginSettings.bookFolder;
     const files = app.vault.getMarkdownFiles();
@@ -50,7 +50,7 @@ const getWordList = async (): Promise<string[]> => {
         .filter(file => file.path.startsWith(folderPath + '/'))
         .map(file => file.basename);
     console.log("取得した単語リスト:", wordList);
-    return wordList;
+    return { words: wordList };
 };
 
 const getWordDetail = async (word: string): Promise<string> => {
@@ -177,6 +177,8 @@ export const generateChatResponse = async (userInput: string, context: string): 
             basePrompt += `\n辞典の説明: ${pluginSettings.bookDescription}。`;
         }
     }
+    basePrompt += "必要に応じて単語の登録状況を確認し、既存の単語の意味に沿うように回答してください。";
+    basePrompt += "未登録、および既知の単語には[[単語]]の形でリンクを作成してください。";
 
     const history: Content[] = [
         { role: "user", parts: [{ text: basePrompt }] },
@@ -187,14 +189,14 @@ export const generateChatResponse = async (userInput: string, context: string): 
         history.push({ role: "user", parts: [{ text: `ユーザーは今「${context}」という単語のページを見ています。この文脈を踏まえて回答してください。` }] });
         history.push({ role: "model", parts: [{ text: "承知いたしました。文脈を考慮して回答します。" }] });
     }
-    
+
     history.push({ role: "user", parts: [{ text: userInput }] });
 
     try {
         const result = await ai.models.generateContent({
             model: GEMINI_TEXT_MODEL,
             contents: history,
-            config:{
+            config: {
                 tools: tools,
             }
         });
@@ -236,7 +238,7 @@ export const generateChatResponse = async (userInput: string, context: string): 
                     tools: tools,
                 }
             });
-            
+
             responsePart = result2.candidates?.[0]?.content?.parts?.[0];
             if (!responsePart) {
                 return "AIからの応答がありませんでした。";
