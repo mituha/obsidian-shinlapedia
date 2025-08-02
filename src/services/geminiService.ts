@@ -57,7 +57,11 @@ const getWordDetail = async (word: string): Promise<string> => {
     console.warn(`単語「${word}」が見つかりません。`);
     return `単語「${word}」は辞典に見つかりませんでした。`;
 };
-
+const createWordEntry = async (word: string): Promise<string> => {
+    if (!dictionaryProvider) return "Providerが初期化されていません。";
+    const result = await dictionaryProvider.createWord(word);
+    return result.message;
+};
 
 const tools: Tool[] = [
     {
@@ -83,6 +87,20 @@ const tools: Tool[] = [
                     },
                     required: ["word"]
                 }
+            },
+            {
+                name: "createWordEntry",
+                description: "新しい単語を辞典に登録します。ファイルが作成されると、内容は自動的に生成されます。",
+                parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                        word: {
+                            type: Type.STRING,
+                            description: "登録する新しい単語名"
+                        }
+                    },
+                    required: ["word"]
+                }
             }
         ]
     }
@@ -91,6 +109,7 @@ const tools: Tool[] = [
 const functionHandlers: { [key: string]: (...args: any[]) => Promise<any> } = {
     getWordList: () => getWordList(),
     getWordDetail: ({ word }: { word: string }) => getWordDetail(word),
+    createWordEntry: ({ word }: { word: string }) => createWordEntry(word),
 };
 
 
@@ -173,6 +192,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
     }
     basePrompt += "必要に応じて単語の登録状況を確認し、既存の単語の意味に沿うように回答してください。";
     basePrompt += "未登録、および既知の単語には[[単語]]の形でリンクを作成してください。";
+    basePrompt += "ユーザーの依頼に応じて、`createWordEntry`ツールを使って新しい単語を辞典に登録することもできます。";
 
     const history: Content[] = [
         { role: "user", parts: [{ text: basePrompt }] },

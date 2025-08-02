@@ -17,4 +17,11 @@ export interface DictionaryProvider {
      * @returns アクティブなファイルの内容。アクティブなファイルがない場合はnullを返す。
      */
     getActiveFileContent(): Promise<string | null>;
+
+    /**
+     * 新しい単語ファイルを作成します。
+     * @param word 作成する単語名
+     * @returns 処理の成功有無とメッセージを含むオブジェクト
+     */
+    createWord(word: string): Promise<{ success: boolean; message: string }>;
 }

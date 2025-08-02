@@ -28,22 +28,26 @@ export class ObsidianDictionaryProvider implements DictionaryProvider {
             .filter(file => file.path.startsWith(folderPath))
             .map(file => file.basename);
     }
-
-    async getWordDetail(word: string): Promise<string | null> {
+    getWordFile(word: string): TFile | null {
         const folderPath = this.getBookFolder();
         //現状、同一のファイル名(単語)はない想定での構造
         const files = this.app.vault.getMarkdownFiles();
         //単語の一致するファイルを取得
         const matchingFiles = files.filter(file => file.path.startsWith(folderPath) && file.basename === word);
-        if(matchingFiles.length === 0) {
+        if (matchingFiles.length === 0) {
             return null; // ファイルが見つからない場合はnullを返す
         }
         // ここで最初の一致するファイルを取得
-        const file = matchingFiles.first();
-        if (file instanceof TFile) {
-            return this.app.vault.read(file);
+        return matchingFiles.first() as TFile;
+    }
+
+    async getWordDetail(word: string): Promise<string | null> {
+        // ここで最初の一致するファイルを取得
+        const file = this.getWordFile(word);
+        if (!file){
+             return null;
         }
-        return null;
+        return this.app.vault.read(file);
     }
 
     async getActiveFileContent(): Promise<string | null> {
@@ -55,5 +59,31 @@ export class ObsidianDictionaryProvider implements DictionaryProvider {
             return activeView.editor.getValue();
         }
         return null;
+    }
+
+    async createWord(word: string): Promise<{ success: boolean; message: string }> {
+        //既に同じ名前のファイルが存在する場合、何もしない
+        if (this.getWordFile(word)) {
+            return { success: false, message: `ファイル「${word}」は既に存在します。` };
+        }   
+        const folderPath = this.getBookFolder();
+        const fileName = word.endsWith('.md') ? word : `${word}.md`;
+        const filePath = `${folderPath}${fileName}`;
+
+        try {
+            const fileExists = await this.app.vault.adapter.exists(filePath);
+            if (fileExists) {
+                return { success: false, message: `ファイル「${word}」は既に存在します。` };
+            }
+
+            // 空のファイルを作成
+            const file = await this.app.vault.create(filePath, '');
+            
+            return { success: true, message: `単語「${word}」を登録しました。内容は自動生成されます。` };
+
+        } catch (error) {
+            console.error(`ファイル作成エラー: ${word}`, error);
+            return { success: false, message: `単語「${word}」の登録中にエラーが発生しました。` };
+        }
     }
 }
