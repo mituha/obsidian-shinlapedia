@@ -98,6 +98,32 @@ export default class ShinLapediaPlugin extends Plugin {
 		this.registerMarkdownPostProcessor((element, context) => {
 			applyRubyToElement(element);
 		});
+
+		/*
+		//動作確認用に選択されているleafを確認
+		this.registerEvent(this.app.workspace.on('active-leaf-change', (leaf) => {
+			//このイベントはエリアの区別なく呼び出される。
+			if (leaf) {
+				console.log('Active leaf changed:', leaf);
+				//通知でも表示
+				new Notice(`アクティブなleafが変更されました: ${leaf.view.getDisplayText()}`);
+			} else {
+				console.log('No active leaf.');
+				new Notice('No active leaf.');
+			} 
+
+			//メインのエディター部分でのアクティブなleafを確認
+			// ルートスプリットの最新のleafを取得
+			const rootLeaf = this.app.workspace.getMostRecentLeaf(this.app.workspace.rootSplit);
+			if (rootLeaf) {
+				console.log('Active root leaf:', rootLeaf);
+				new Notice(`アクティブなルートleaf: ${rootLeaf.view.getDisplayText()}`);
+			} else {
+				console.log('No active root leaf.');
+				new Notice('No active root leaf.');
+			}
+		}));
+		*/
 	}
 
 	onunload() {
