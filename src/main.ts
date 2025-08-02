@@ -1,18 +1,30 @@
-import { App, MarkdownView, Modal, Notice, Plugin, TFile, Setting } from 'obsidian';
-import { initializeGeminiAI, getWordDefinition, setApp } from './services/geminiService'; // Import the function to initialize Gemini AI
+import { App, Notice, Plugin, TFile } from 'obsidian';
+import { initializeGeminiAI, getWordDefinition } from './services/geminiService';
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
 import { FileNameModal } from './ui/FileNameModal';
 import { applyRubyToElement } from './services/rubyTextFormatter';
 import { ChatView, CHAT_VIEW_TYPE } from './ui/ChatView';
+import { ObsidianDictionaryProvider } from './providers/ObsidianDictionaryProvider';
+import { DictionaryProvider } from './providers/DictionaryProvider';
 
 export default class ShinLapediaPlugin extends Plugin {
 	settings: ShinLapediaPluginSettings;
+	dictionaryProvider: DictionaryProvider;
 
 	async onload() {
 		await this.loadSettings();
-		setApp(this.app);
+
+		// Providerの初期化
+		this.dictionaryProvider = new ObsidianDictionaryProvider(this.app, this.settings);
+
+		// AIサービスの初期化
+		if (initializeGeminiAI(this.settings.geminApiKey, this.settings, this.dictionaryProvider)) {
+			console.log('Gemini AI initialized with provided API key.');
+		} else {
+			console.warn('No valid Gemini API key found. AI features may not work as expected.');
+		}
 
 		this.registerView(
 			CHAT_VIEW_TYPE,
@@ -132,13 +144,6 @@ export default class ShinLapediaPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-
-		//APIキーがある場合、AIエージェントの初期化を行う。
-		if (initializeGeminiAI(this.settings.geminApiKey, this.settings)) {
-			console.log('Gemini AI initialized with provided API key.');
-		} else {
-			console.warn('No valid Gemini API key found. AI features may not work as expected.');
-		}
 	}
 
 	async saveSettings() {
@@ -189,5 +194,3 @@ export default class ShinLapediaPlugin extends Plugin {
 		);
 	}
 }
-
-

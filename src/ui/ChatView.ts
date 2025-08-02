@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf,MarkdownView, Notice ,MarkdownRenderer} from "obsidian";
+import { ItemView, WorkspaceLeaf, Notice ,MarkdownRenderer} from "obsidian";
 import ShinLapediaPlugin from "../main";
 import { GoogleGenAI } from "@google/genai";
 import { generateChatResponse } from '../services/geminiService';
@@ -46,12 +46,7 @@ export class ChatView extends ItemView {
 			}
 		});
 	}
-    private getCurrentContext(): string {
-        const allMarkdownLeaves: WorkspaceLeaf[] = this.app.workspace.getLeavesOfType('markdown');
-        const firstMarkdownView = allMarkdownLeaves[0]?.view as MarkdownView | undefined;
-        const activeView = firstMarkdownView || this.app.workspace.getActiveViewOfType(MarkdownView);
-        return activeView ? activeView.editor.getValue() : '';
-    }
+    
 	private async sendMessage() {
 		const message = this.inputEl.value;
 		if (!message.trim()) return;
@@ -63,9 +58,7 @@ export class ChatView extends ItemView {
             document.body.style.cursor = 'wait';
             const notice = new Notice(`AIが応答を生成中です...`, 0);
 			
-
-            const editorContent = this.getCurrentContext();
-            const response = await generateChatResponse(message, editorContent);
+            const response = await generateChatResponse(message);
 			this.addMessage(response, "model");
 
 			notice.hide();

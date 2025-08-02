@@ -1,23 +1,22 @@
-import { GoogleGenAI, Type, Tool, Part, HarmCategory, HarmBlockThreshold, Content } from "@google/genai";
+import { GoogleGenAI, Type, Tool, Content } from "@google/genai";
 import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
 import { LexicalEntryFormatter } from "../formatters/lexicalEntryFormatter";
-import { App, TFile } from "obsidian";
+import { DictionaryProvider } from "../providers/DictionaryProvider";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
 const GEMINI_TEXT_MODEL = "gemini-1.5-flash-latest";
 
 let ai: GoogleGenAI | null = null;
 let pluginSettings: ShinLapediaPluginSettings | null = null;
-let app: App | null = null;
+let dictionaryProvider: DictionaryProvider | null = null;
 
-export const setApp = (obsidianApp: App) => {
-    app = obsidianApp;
-};
-
-export const initializeGeminiAI = (apiKey: string, settings: ShinLapediaPluginSettings): boolean => {
+export const initializeGeminiAI = (
+    apiKey: string,
+    settings: ShinLapediaPluginSettings,
+    provider: DictionaryProvider
+): boolean => {
     if (!apiKey || apiKey.trim() === "") {
-        //APIキーが設定されていない場合、環境変数からの取得を試みる。
         apiKey = process.env.GEMINI_API_KEY || '';
     }
     if (!apiKey || apiKey.trim() === "") {
@@ -25,13 +24,15 @@ export const initializeGeminiAI = (apiKey: string, settings: ShinLapediaPluginSe
     }
     ai = new GoogleGenAI({ apiKey: apiKey });
     pluginSettings = settings;
+    dictionaryProvider = provider;
     return true;
 };
 
 const checkApiKey = (): boolean => {
-    if (!ai) {
-        console.error(API_KEY_ERROR_MESSAGE);
-        alert(API_KEY_ERROR_MESSAGE);
+    if (!ai || !dictionaryProvider) {
+        const message = !ai ? API_KEY_ERROR_MESSAGE : "DictionaryProviderが初期化されていません。";
+        console.error(message);
+        alert(message);
         return false;
     }
     return true;
@@ -39,34 +40,24 @@ const checkApiKey = (): boolean => {
 
 // --- Function Calling Tools ---
 
-const getWordList = async (): Promise<{ words: string[] } > => {
-    if (!app || !pluginSettings?.bookFolder) {
-        console.warn("辞典フォルダが設定されていません。");
-        return {words:[]};
-    }
-    const folderPath = pluginSettings.bookFolder;
-    const files = app.vault.getMarkdownFiles();
-    const wordList = files
-        .filter(file => file.path.startsWith(folderPath + '/'))
-        .map(file => file.basename);
-    console.log("取得した単語リスト:", wordList);
-    return { words: wordList };
+const getWordList = async (): Promise<{ words: string[] }> => {
+    if (!dictionaryProvider) return { words: [] };
+    const words = await dictionaryProvider.getWordList();
+    console.log("取得した単語リスト:", words);
+    return { words };
 };
 
 const getWordDetail = async (word: string): Promise<string> => {
-    if (!app || !pluginSettings?.bookFolder) {
-        return "辞典フォルダが設定されていません。";
-    }
-    const filePath = `${pluginSettings.bookFolder}/${word}.md`;
-    const file = app.vault.getAbstractFileByPath(filePath);
-    if (file && file instanceof TFile) {
-        const content = await app.vault.read(file);
+    if (!dictionaryProvider) return "Providerが初期化されていません。";
+    const content = await dictionaryProvider.getWordDetail(word);
+    if (content !== null) {
         console.log(`単語「${word}」の内容を取得しました。`);
         return content;
     }
     console.warn(`単語「${word}」が見つかりません。`);
     return `単語「${word}」は辞典に見つかりませんでした。`;
 };
+
 
 const tools: Tool[] = [
     {
@@ -137,6 +128,7 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
             model: GEMINI_TEXT_MODEL,
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             config: {
+                tools: tools,
                 responseMimeType: "application/json",
                 responseSchema: LexicalEntry.getJSONSchema()
             }
@@ -158,8 +150,10 @@ export const getWordDefinition = async (word: string): Promise<string> => {
 };
 
 
-export const generateChatResponse = async (userInput: string, context: string): Promise<string> => {
-    if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+export const generateChatResponse = async (userInput: string): Promise<string> => {
+    if (!checkApiKey() || !ai || !pluginSettings || !dictionaryProvider) throw new Error("AIサービスが正しく初期化されていません。");
+
+    const context = await dictionaryProvider.getActiveFileContent();
 
     let basePrompt = `あなたは博識な辞典の編纂者です。ユーザーと対話してください。`;
 
