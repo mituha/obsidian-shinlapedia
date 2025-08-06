@@ -1,6 +1,9 @@
 
 export interface ShinLapediaPluginSettings {
 	geminApiKey: string;
+	// Geminiモデル設定
+	geminiModel: string;
+	customGeminiModel: string;
 
 	//辞典用のフォルダーを制限する場合
 	bookFolder: string;
@@ -13,7 +16,10 @@ export interface ShinLapediaPluginSettings {
 
 export const DEFAULT_SETTINGS: ShinLapediaPluginSettings = {
 	geminApiKey: '',
-
+	// デフォルトのGeminiモデル
+	geminiModel: 'gemini-2.5-flash',
+	customGeminiModel: '',
+	
 	bookFolder: '',
 	bookTitle: 'ダンジョン辞典',
 	bookDescription: '現代に突如現れたダンジョンによりゲームのようなステータス、スキル等が存在する剣と魔法のファンタジー世界が現実となった。この本は関する情報をまとめた攻略本とも言える辞典。\nダンジョンの構造やモンスター、アイテムなどの情報、フレーバーテキスト等が網羅されている。\nこの辞典は、ダンジョン探索者や研究者にとって貴重な資料となる。\nこの辞典は、ダンジョンの謎を解明し、探索者たちの安全を確保するための重要なツールである。',

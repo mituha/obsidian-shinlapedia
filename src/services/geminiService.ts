@@ -5,7 +5,6 @@ import { LexicalEntryFormatter } from "../formatters/lexicalEntryFormatter";
 import { DictionaryProvider } from "../providers/DictionaryProvider";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
-const GEMINI_TEXT_MODEL = "gemini-1.5-flash-latest";
 
 let ai: GoogleGenAI | null = null;
 let pluginSettings: ShinLapediaPluginSettings | null = null;
@@ -36,6 +35,43 @@ const checkApiKey = (): boolean => {
         return false;
     }
     return true;
+};
+
+/**
+ * 現在アクティブなGeminiモデル名を取得します。
+ * カスタムモデルが設定されていればそれを、なければ標準のモデル名を返します。
+ * @returns {string} アクティブなモデル名
+ */
+const getActiveModel = (): string => {
+    if (!pluginSettings) {
+        // デフォルトのフォールバック
+        return 'gemini-2.5-flash';
+    }
+    if (pluginSettings.geminiModel === 'custom' && pluginSettings.customGeminiModel) {
+        return pluginSettings.customGeminiModel;
+    }
+    return pluginSettings.geminiModel;
+};
+
+export const testConnection = async (apiKey: string, model: string): Promise<{ success: boolean; error?: string }> => {
+    if (!apiKey || apiKey.trim() === "") {
+        apiKey = process.env.GEMINI_API_KEY || '';
+    }
+    if (!apiKey || apiKey.trim() === "") {
+        return { success: false, error: "APIキーが入力されていません。" };
+    }
+
+    try {
+        const testAI = new GoogleGenAI({ apiKey: apiKey });
+        await testAI.models.generateContent({
+            model: model,
+            contents: [{ role: "user", parts: [{ text: "test" }] }],
+        });
+        return { success: true };
+    } catch (error: any) {
+        console.error("Gemini connection test failed:", error);
+        return { success: false, error: error.message || "不明なエラーが発生しました。" };
+    }
 };
 
 // --- Function Calling Tools ---
@@ -144,10 +180,10 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
         prompt += `\n\n類義語、対義語、関連語の項目のリンク記述は不要です。`;
 
         const result = await ai.models.generateContent({
-            model: GEMINI_TEXT_MODEL,
+            model: getActiveModel(),
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             config: {
-                tools: tools,
+                //tools: tools, //TODO JSONと同時使用できない？
                 responseMimeType: "application/json",
                 responseSchema: LexicalEntry.getJSONSchema()
             }
@@ -208,7 +244,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
 
     try {
         const result = await ai.models.generateContent({
-            model: GEMINI_TEXT_MODEL,
+            model: getActiveModel(),
             contents: history,
             config: {
                 tools: tools,
@@ -246,7 +282,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
             });
 
             const result2 = await ai.models.generateContent({
-                model: GEMINI_TEXT_MODEL,
+                model: getActiveModel(),
                 contents: history,
                 config: {
                     tools: tools,
