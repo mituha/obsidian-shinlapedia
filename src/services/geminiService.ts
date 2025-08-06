@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Tool, Content } from "@google/genai";
+import { GoogleGenAI, Type, Tool, Content, GenerateContentConfig, ListTuningJobsResponse, FunctionDeclaration } from "@google/genai";
 import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
 import { LexicalEntryFormatter } from "../formatters/lexicalEntryFormatter";
@@ -82,6 +82,14 @@ const getWordList = async (): Promise<{ words: string[] }> => {
     console.log("取得した単語リスト:", words);
     return { words };
 };
+const getWordListDeclaration: FunctionDeclaration = {
+    name: "getWordList",
+    description: "辞典に登録されているすべての単語の一覧を取得します。",
+    parameters: {
+        type: Type.OBJECT,
+        properties: {},
+    }
+};
 
 const getWordDetail = async (word: string): Promise<string> => {
     if (!dictionaryProvider) return "Providerが初期化されていません。";
@@ -93,51 +101,56 @@ const getWordDetail = async (word: string): Promise<string> => {
     console.warn(`単語「${word}」が見つかりません。`);
     return `単語「${word}」は辞典に見つかりませんでした。`;
 };
+const getWordDetailDeclaration: FunctionDeclaration = {
+    name: "getWordDetail",
+    description: "指定された単語の詳細な説明（ファイルの内容）を取得します。",
+    parameters: {
+        type: Type.OBJECT,
+        properties: {
+            word: {
+                type: Type.STRING,
+                description: "内容を取得したい単語名"
+            }
+        },
+        required: ["word"]
+    }
+};
+
 const createWordEntry = async (word: string): Promise<string> => {
     if (!dictionaryProvider) return "Providerが初期化されていません。";
     const result = await dictionaryProvider.createWord(word);
     return result.message;
 };
+const createWordEntryDeclaration: FunctionDeclaration = {
+    name: "createWordEntry",
+    description: "新しい単語を辞典に登録します。ファイルが作成されると、内容は自動的に生成されます。",
+    parameters: {
+        type: Type.OBJECT,
+        properties: {
+            word: {
+                type: Type.STRING,
+                description: "登録する新しい単語名"
+            }
+        },
+        required: ["word"]
+    }
+};
+
+const readOnlyTools: Tool[] = [
+    {
+        functionDeclarations: [
+            getWordListDeclaration,
+            getWordDetailDeclaration,
+        ]
+    }
+];
 
 const tools: Tool[] = [
     {
         functionDeclarations: [
-            {
-                name: "getWordList",
-                description: "辞典に登録されているすべての単語の一覧を取得します。",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {},
-                }
-            },
-            {
-                name: "getWordDetail",
-                description: "指定された単語の詳細な説明（ファイルの内容）を取得します。",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        word: {
-                            type: Type.STRING,
-                            description: "内容を取得したい単語名"
-                        }
-                    },
-                    required: ["word"]
-                }
-            },
-            {
-                name: "createWordEntry",
-                description: "新しい単語を辞典に登録します。ファイルが作成されると、内容は自動的に生成されます。",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        word: {
-                            type: Type.STRING,
-                            description: "登録する新しい単語名"
-                        }
-                    },
-                    required: ["word"]
-                }
-            }
+            getWordListDeclaration,
+            getWordDetailDeclaration,
+            createWordEntryDeclaration
         ]
     }
 ];
@@ -148,16 +161,14 @@ const functionHandlers: { [key: string]: (...args: any[]) => Promise<any> } = {
     createWordEntry: ({ word }: { word: string }) => createWordEntry(word),
 };
 
-
-// --- AI Interaction ---
-
-export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
+const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string): Promise<string> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+    const useFunctionCalls = !toJson;;
 
     try {
         let prompt = `あなたは辞典の編纂者です`;
 
-        prompt += `\n「${word}」について、以下のJSONスキーマに従って日本語で詳細な語彙情報を生成してください。`;
+        prompt += `\n「${word}」について、日本語で詳細な語彙情報を生成してください。`;
 
         if (pluginSettings.bookTitle) {
             prompt += `\n 辞典「${pluginSettings.bookTitle}」の文脈で説明してください。`;
@@ -178,25 +189,118 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。`;
         prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
         prompt += `\n\n類義語、対義語、関連語の項目のリンク記述は不要です。`;
+        if(useFunctionCalls) {
+            prompt += `\n\n必要な情報は、辞典に登録されている単語の情報を参照してください。`;
+            prompt += `\n\n辞典に登録されていない単語は、辞典の文脈で解釈してください。`;
+        }
+        if(!toJson) {
+            prompt += `\n\n必要な情報は以下のJSON形式の語彙情報を参照してください。`;
+            prompt += "\n\n```json\n";
+            prompt += LexicalEntry.getJSONSchema();
+            prompt += "\n```";
+        }
+
+        const history: Content[] = [
+            { role: "user", parts: [{ text: prompt }] },
+        ];
+        if (entry) {
+            let entryPrompt = `ユーザーは下記単語のページを見ています。必要に応じて再編纂してください。\n`;
+            entryPrompt += `\n\n---\n\n`;
+            entryPrompt += entry;
+            entryPrompt += `\n\n---\n\n`;
+            history.push({ role: "user", parts: [{ text: entryPrompt }] });
+        }
+        if (toJson) {
+            let jsonPrompt = `\n\nこの「${word}」の語彙情報をJSON形式に合うように再編纂して返してください。`;
+            jsonPrompt += `\n\n足りない情報は辞典の文脈で適宜補完してください。`;
+            history.push({ role: "user", parts: [{ text: jsonPrompt }] });
+        }
+        const config0: GenerateContentConfig = {
+            tools: readOnlyTools,
+        }
+        const config1: GenerateContentConfig = {
+            responseMimeType: "application/json",
+            responseSchema: LexicalEntry.getJSONSchema()
+        }
 
         const result = await ai.models.generateContent({
             model: getActiveModel(),
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            config: {
-                //tools: tools, //TODO JSONと同時使用できない？
-                responseMimeType: "application/json",
-                responseSchema: LexicalEntry.getJSONSchema()
-            }
+            contents: history,
+            config: toJson ? config1 : config0
         });
+        if (toJson) {
+            //JSON自体への変更は上位で行う
+            return result.text ?? "{}"; // デフォルト値を空のJSON文字列に設定
+        } else {
+            //JSON形式を想定しない場合は関数呼び出しを想定
+            let responsePart = result.candidates?.[0]?.content?.parts?.[0];
+            if (!responsePart) {
+                return "AIからの応答がありませんでした。";
+            }
+            let funcCalls = result.functionCalls;
+            console.log("functionCalls:", funcCalls);
 
-        const response = result.text ?? "{}"; // デフォルト値を空のJSON文字列に設定
-        const jsonResponse = JSON.parse(response);
 
-        return LexicalEntry.fromJSON(jsonResponse);
+            while (funcCalls && funcCalls.length > 0) {
+                const fc = funcCalls[0];
+                //const { name, args } = fc;
+                const name = fc.name;
+                const args = fc.args;
+                console.log(`Function Call: ${name}(${JSON.stringify(args)})`);
+
+                const handler = functionHandlers[name!];
+                if (!handler) {
+                    throw new Error(`Unknown function call: ${name}`);
+                }
+
+                const functionResult = await handler(args);
+
+                history.push({ role: 'model', parts: [responsePart] });
+                history.push({
+                    role: 'user',
+                    parts: [{
+                        functionResponse: {
+                            name,
+                            response: {
+                                content: functionResult
+                            }
+                        }
+                    }]
+                });
+
+                const result2 = await ai.models.generateContent({
+                    model: getActiveModel(),
+                    contents: history,
+                    config: {
+                        tools: readOnlyTools,
+                    }
+                });
+
+                responsePart = result2.candidates?.[0]?.content?.parts?.[0];
+                if (!responsePart) {
+                    return "AIからの応答がありませんでした。";
+                }
+                funcCalls = result2.functionCalls;
+                console.log("functionCalls:", funcCalls);
+            }
+
+            return responsePart.text || "AIからの応答がありませんでした。";
+        }
     } catch (error) {
         console.error(`単語「${word}」の語彙情報取得中にAIエラーが発生しました:`, error);
         throw error;
     }
+};
+
+export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
+    if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+
+    //関数呼び出しを含む暫定的な語彙情報の取得
+    const desc = await getLexicalEntryCore(word, false, "");
+    console.log(`取得した語彙情報: ${desc}`);
+    const response = await getLexicalEntryCore(word, true, desc);
+    const jsonResponse = JSON.parse(response);
+    return LexicalEntry.fromJSON(jsonResponse);
 };
 
 export const getWordDefinition = async (word: string): Promise<string> => {
@@ -257,8 +361,11 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
         let funcCalls = result.functionCalls;
         console.log("functionCalls:", funcCalls);
 
-        while (funcCalls) {
-            const { name, args } = responsePart.functionCall!;
+        while (funcCalls && funcCalls.length > 0) {
+            const fc = funcCalls[0];
+            //const { name, args } = fc;
+            const name = fc.name;
+            const args = fc.args;
             console.log(`Function Call: ${name}(${JSON.stringify(args)})`);
 
             const handler = functionHandlers[name!];
@@ -293,6 +400,8 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
             if (!responsePart) {
                 return "AIからの応答がありませんでした。";
             }
+            funcCalls = result2.functionCalls;
+            console.log("functionCalls:", funcCalls);
         }
 
         return responsePart.text || "AIからの応答がありませんでした。";
