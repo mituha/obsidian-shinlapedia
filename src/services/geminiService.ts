@@ -163,7 +163,9 @@ const functionHandlers: { [key: string]: (...args: any[]) => Promise<any> } = {
 
 const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string): Promise<string> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
-    const useFunctionCalls = !toJson;;
+    const useFunctionCalls = !toJson;
+    //toJsonではない呼び出しで既存のエントリーを使用する場合は再編纂で大きく変える場合も想定する。
+    const isRewrite = entry !== "" && useFunctionCalls;
 
     try {
         let prompt = `あなたは辞典の編纂者です`;
@@ -208,6 +210,9 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string)
             entryPrompt += `\n\n---\n\n`;
             entryPrompt += entry;
             entryPrompt += `\n\n---\n\n`;
+            if(isRewrite) {
+                entryPrompt += `\n\nこの内容は更新される必要が生じています。他の情報を参照して、必要な情報を追加、更新してください。`;
+            } 
             history.push({ role: "user", parts: [{ text: entryPrompt }] });
         }
         if (toJson) {
@@ -294,9 +299,13 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string)
 
 export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+    if (!dictionaryProvider) throw "Providerが初期化されていません。";
+
+    //既存の単語に対する呼び出しの場合、書き換えになる
+    const content = await dictionaryProvider.getWordDetail(word);
 
     //関数呼び出しを含む暫定的な語彙情報の取得
-    const desc = await getLexicalEntryCore(word, false, "");
+    const desc = await getLexicalEntryCore(word, false, content || "");
     console.log(`取得した語彙情報: ${desc}`);
     const response = await getLexicalEntryCore(word, true, desc);
     const jsonResponse = JSON.parse(response);
