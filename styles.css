@@ -19,6 +19,25 @@
 	word-wrap: break-word;
 }
 
+.chat-message-container {
+	position: relative;
+	margin-bottom: 10px;
+}
+
+.chat-copy-button {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.2s, visibility 0.2s;
+}
+
+.chat-message-container:hover .chat-copy-button {
+	visibility: visible;
+	opacity: 1;
+}
+
 .user-message {
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);

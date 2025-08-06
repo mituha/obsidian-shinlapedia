@@ -75,15 +75,33 @@ export class ChatView extends ItemView {
 	}
 
 	private addMessage(text: string, role: "user" | "model") {
-		const messageEl = this.chatContainer.createDiv({
-			cls: `chat-message ${role}-message`,
+		const messageContainer = this.chatContainer.createDiv({
+			cls: `chat-message-container ${role}-message`,
 		});
-		
+
+		const messageEl = messageContainer.createDiv({
+			cls: `chat-message`,
+		});
+
 		if (role === 'model') {
-			MarkdownRenderer.render(this.app,text,messageEl,'',this);
+			MarkdownRenderer.render(this.app, text, messageEl, '', this);
 		} else {
 			messageEl.setText(text);
 		}
+
+		const copyButton = messageContainer.createEl("button", {
+			text: "コピー",
+			cls: "chat-copy-button",
+		});
+
+		copyButton.addEventListener("click", () => {
+			navigator.clipboard.writeText(text).then(() => {
+				new Notice("メッセージをコピーしました");
+			}, (err) => {
+				console.error("Could not copy text: ", err);
+				new Notice("コピーに失敗しました");
+			});
+		});
 
 		this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
 	}
