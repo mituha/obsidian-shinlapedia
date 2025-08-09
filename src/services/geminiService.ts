@@ -3,6 +3,7 @@ import { ShinLapediaPluginSettings } from "../shinLapediaSettings";
 import { LexicalEntry } from "../models/lexicalEntry";
 import { LexicalEntryFormatter } from "../formatters/lexicalEntryFormatter";
 import { DictionaryProvider } from "../providers/DictionaryProvider";
+import { a } from "vitest/dist/chunks/suite.d.FvehnV49";
 
 const API_KEY_ERROR_MESSAGE = "Gemini APIキーが設定されていません。";
 
@@ -161,7 +162,25 @@ const functionHandlers: { [key: string]: (...args: any[]) => Promise<any> } = {
     createWordEntry: ({ word }: { word: string }) => createWordEntry(word),
 };
 
-const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string): Promise<string> => {
+//関連するコンテキスト
+//事前に設定することで単語生成時に参照されます。
+let activeContext: string | null = null;
+
+/**
+ * 現在のアクティブなコンテキストを設定します。
+ * 辞典の現在のファイル内容を取得し、activeContextに設定します。
+ * @returns {Promise<void>}
+ */
+export const setActiveContext = async (): Promise<void> => {
+    if (!dictionaryProvider) throw "Providerが初期化されていません。";
+    const context = await dictionaryProvider.getActiveFileContent();
+    if(context){
+        activeContext = context;
+    }
+};
+
+
+const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string, ...dependentContents: string[]): Promise<string> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
     const useFunctionCalls = !toJson;
     //toJsonではない呼び出しで既存のエントリーを使用する場合は再編纂で大きく変える場合も想定する。
@@ -191,11 +210,26 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string)
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。`;
         prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
         prompt += `\n\n類義語、対義語、関連語の項目のリンク記述は不要です。`;
-        if(useFunctionCalls) {
+        if (useFunctionCalls) {
             prompt += `\n\n必要な情報は、辞典に登録されている単語の情報を参照してください。`;
             prompt += `\n\n辞典に登録されていない単語は、辞典の文脈で解釈してください。`;
         }
-        if(!toJson) {
+        if (activeContext) {
+            let contextPrompt = `\nユーザーは今、以下のページを見ています。\nこの文脈を踏まえて回答してください。`;
+            contextPrompt += `\n\n------\n\n`;
+            contextPrompt += activeContext;
+            contextPrompt += `\n\n------\n\n`;
+            prompt += contextPrompt;
+        }
+        if (dependentContents && dependentContents.length > 0) {
+            prompt += `\n\n以下の内容も参照してください。`;
+            for (const content of dependentContents) {
+                if(content){
+                    prompt += `\n\n------\n\n${content}\n\n------\n\n`;
+                }
+            }
+        }
+        if (!toJson) {
             prompt += `\n\n必要な情報は以下のJSON形式の語彙情報を参照してください。`;
             prompt += "\n\n```json\n";
             prompt += LexicalEntry.getJSONSchema();
@@ -210,9 +244,9 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string)
             entryPrompt += `\n\n---\n\n`;
             entryPrompt += entry;
             entryPrompt += `\n\n---\n\n`;
-            if(isRewrite) {
+            if (isRewrite) {
                 entryPrompt += `\n\nこの内容は更新される必要が生じています。他の情報を参照して、必要な情報を追加、更新してください。`;
-            } 
+            }
             history.push({ role: "user", parts: [{ text: entryPrompt }] });
         }
         if (toJson) {
@@ -297,7 +331,7 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string)
     }
 };
 
-export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
+export const getLexicalEntry = async (word: string, ...dependentContents: string[]): Promise<LexicalEntry> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
     if (!dictionaryProvider) throw "Providerが初期化されていません。";
 
@@ -305,15 +339,15 @@ export const getLexicalEntry = async (word: string): Promise<LexicalEntry> => {
     const content = await dictionaryProvider.getWordDetail(word);
 
     //関数呼び出しを含む暫定的な語彙情報の取得
-    const desc = await getLexicalEntryCore(word, false, content || "");
+    const desc = await getLexicalEntryCore(word, false, content || "", ...dependentContents);
     console.log(`取得した語彙情報: ${desc}`);
     const response = await getLexicalEntryCore(word, true, desc);
     const jsonResponse = JSON.parse(response);
     return LexicalEntry.fromJSON(jsonResponse);
 };
 
-export const getWordDefinition = async (word: string): Promise<string> => {
-    const entry = await getLexicalEntry(word);
+export const getWordDefinition = async (word: string, ...dependentContents: string[]): Promise<string> => {
+    const entry = await getLexicalEntry(word, ...dependentContents);
     return LexicalEntryFormatter.toMarkdown(entry);
 };
 
@@ -349,7 +383,15 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
     ];
 
     if (context) {
-        history.push({ role: "user", parts: [{ text: `ユーザーは今「${context}」という単語のページを見ています。この文脈を踏まえて回答してください。` }] });
+        //キャッシュ的に使用。これによりチャット内で新規単語作成時に適用
+        activeContext = context; //関連するコンテキストを設定
+
+        let contextPrompt = `ユーザーは今、以下のページを見ています。\nこの文脈を踏まえて回答してください。`;
+        contextPrompt += `\n\n------\n\n`;
+        contextPrompt += context;
+        contextPrompt += `\n\n------\n\n`;
+
+        history.push({ role: "user", parts: [{ text: contextPrompt }] });
         history.push({ role: "model", parts: [{ text: "承知いたしました。文脈を考慮して回答します。" }] });
     }
 

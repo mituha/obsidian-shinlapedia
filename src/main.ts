@@ -1,4 +1,4 @@
-import { App, Notice, Plugin, TFile } from 'obsidian';
+import { App, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { initializeGeminiAI, getWordDefinition } from './services/geminiService';
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
@@ -89,11 +89,7 @@ export default class ShinLapediaPlugin extends Plugin {
 					document.body.style.cursor = 'wait';
 					const notice = new Notice(`ファイル ${file.path} の内容をAIで生成しています...`);
 
-					//ファイルは空の前提
-					const definition = await getWordDefinition(file.basename);
-					//追記を使用するが、ファイルは空の前提なので、内容は上書きされる。
-					await this.app.vault.append(file, `${definition}\n`);
-					console.log(`ファイル ${file.path} に内容を追加しました。`);
+					await this.dictionaryProvider.updateWordFile(file);
 
 					//通知を消す
 					notice.hide();

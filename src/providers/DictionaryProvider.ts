@@ -1,3 +1,5 @@
+import { TFile } from "obsidian";
+
 // src/providers/DictionaryProvider.ts
 export interface DictionaryProvider {
     /**
@@ -24,4 +26,11 @@ export interface DictionaryProvider {
      * @returns 処理の成功有無とメッセージを含むオブジェクト
      */
     createWord(word: string): Promise<{ success: boolean; message: string }>;
+
+    /**
+     * 単語ファイルを更新します。
+     * @param file 更新する単語ファイル
+     * @returns 処理の成功有無
+     */
+    updateWordFile(file: TFile): Promise<void>;
 }
