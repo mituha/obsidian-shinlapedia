@@ -5,7 +5,7 @@ import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
 import * as path from 'path';
 import { FileNameModal } from './ui/FileNameModal';
 import { applyRubyToElement } from './services/rubyTextFormatter';
-import { ChatView, CHAT_VIEW_TYPE } from './ui/ChatView';
+import { ChatView } from './ui/ChatView';
 import { ObsidianDictionaryProvider } from './providers/ObsidianDictionaryProvider';
 import { DictionaryProvider } from './providers/DictionaryProvider';
 
@@ -27,11 +27,11 @@ export default class ShinLapediaPlugin extends Plugin {
 		}
 
 		this.registerView(
-			CHAT_VIEW_TYPE,
+			ChatView.VIEW_TYPE,
 			(leaf) => new ChatView(leaf, this)
 		);
 
-		this.addRibbonIcon('message-circle', 'ShinLapedia Chat', () => {
+		this.addRibbonIcon(ChatView.VIEW_ICON, ChatView.VIEW_TITLE, () => {
 			this.activateView();
 		});
 
@@ -70,11 +70,8 @@ export default class ShinLapediaPlugin extends Plugin {
 					console.log(`ファイル ${file.path} は既に存在します。AIによる処理は行いません。`);
 					return;
 				}
-				if (this.settings.bookFolder) {
-					let bookFolder = this.settings.bookFolder;
-					if (!bookFolder.endsWith('/')) {
-						bookFolder += '/'; // フォルダーのパスがスラッシュで終わっていない場合、追加する					
-					}
+				const bookFolder = this.dictionaryProvider.getBookFolder();
+				if (bookFolder) {
 					const filePath = path.dirname(file.path) + '/'; // ファイルのパスからフォルダーを取得
 					console.log(`ファイルのフォルダー: ${filePath}`);
 					if (!filePath.startsWith(bookFolder)) {
@@ -135,7 +132,7 @@ export default class ShinLapediaPlugin extends Plugin {
 	}
 
 	onunload() {
-		this.app.workspace.detachLeavesOfType(CHAT_VIEW_TYPE);
+		this.app.workspace.detachLeavesOfType(ChatView.VIEW_TYPE);
 	}
 
 	async loadSettings() {
@@ -152,8 +149,9 @@ export default class ShinLapediaPlugin extends Plugin {
 		}
 
 		let filePath = fileName;
-		if (this.settings.bookFolder) {
-			filePath = path.join(this.settings.bookFolder, fileName);
+		const bookFolder = this.dictionaryProvider.getBookFolder();
+		if (bookFolder) {
+			filePath = path.join(bookFolder, fileName);
 		}
 
 		// ファイルが存在するかチェックするわん
@@ -178,15 +176,15 @@ export default class ShinLapediaPlugin extends Plugin {
 	}
 
 	async activateView() {
-		this.app.workspace.detachLeavesOfType(CHAT_VIEW_TYPE);
+		this.app.workspace.detachLeavesOfType(ChatView.VIEW_TYPE);
 
 		await this.app.workspace.getRightLeaf(false)?.setViewState({
-			type: CHAT_VIEW_TYPE,
+			type: ChatView.VIEW_TYPE,
 			active: true,
 		});
 
 		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(CHAT_VIEW_TYPE)[0]
+			this.app.workspace.getLeavesOfType(ChatView.VIEW_TYPE)[0]
 		);
 	}
 }

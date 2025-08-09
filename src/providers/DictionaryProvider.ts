@@ -2,6 +2,13 @@ import { TFile } from "obsidian";
 
 // src/providers/DictionaryProvider.ts
 export interface DictionaryProvider {
+
+    /**
+     * 辞典の書籍フォルダのパスを取得します。
+     * @returns 書籍フォルダのパス
+     */
+    getBookFolder(): string;
+
     /**
      * 辞典に登録されているすべての単語の一覧を取得します。
      */

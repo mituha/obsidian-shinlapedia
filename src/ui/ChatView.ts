@@ -3,9 +3,11 @@ import ShinLapediaPlugin from "../main";
 import { GoogleGenAI } from "@google/genai";
 import { generateChatResponse } from '../services/geminiService';
 
-export const CHAT_VIEW_TYPE = "shinlapedia-chat-view";
-
 export class ChatView extends ItemView {
+	static readonly VIEW_TYPE = "shinlapedia-chat-view";
+	static readonly VIEW_ICON = "message-circle";
+	static readonly VIEW_TITLE = "万象言海チャット";
+
 	private plugin: ShinLapediaPlugin;
 	private chatContainer: HTMLDivElement;
 	private inputEl: HTMLInputElement;
@@ -14,14 +16,15 @@ export class ChatView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: ShinLapediaPlugin) {
 		super(leaf);
 		this.plugin = plugin;
+		this.icon = ChatView.VIEW_ICON;
 	}
 
 	getViewType() {
-		return CHAT_VIEW_TYPE;
+		return ChatView.VIEW_TYPE;
 	}
 
 	getDisplayText() {
-		return "ShinLapedia Chat";
+		return ChatView.VIEW_TITLE;
 	}
 
 	async onOpen() {

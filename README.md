@@ -1,5 +1,7 @@
 # ShinLapedia / 万象言海 - 架空辞典作成プラグイン
 
+Note: This plugin is intended for use in Japanese.
+
 **ShinLapedia**（万象言海）は、Obsidianであなただけの架空の辞典や用語集を作成するためのプラグインです。  
 ノートのリンクを辿るだけで、AIがその単語の意味を自動的に生成し、無限に広がる知識の海を航海するような体験を提供します。
 

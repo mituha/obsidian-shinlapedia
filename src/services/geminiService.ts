@@ -187,13 +187,18 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
     const isRewrite = entry !== "" && useFunctionCalls;
 
     try {
-        let prompt = `あなたは辞典の編纂者です`;
-
-        prompt += `\n「${word}」について、日本語で詳細な語彙情報を生成してください。`;
+        let prompt = `あなたは辞典の編纂者です。`;
 
         if (pluginSettings.bookTitle) {
-            prompt += `\n 辞典「${pluginSettings.bookTitle}」の文脈で説明してください。`;
+            prompt += `\nあなたは辞典「${pluginSettings.bookTitle}」の編纂者として、その辞典に掲載するための「${word}」の項目を執筆します。`;
+        } else {
+            prompt += `\nこれから、辞典に掲載するための「${word}」の項目を執筆します。`;
         }
+
+        prompt += `\n\n辞典に掲載する文章として、その世界観や設定に完全に没入した視点で記述してください。`;
+        prompt += `\n生成する文章には、「この辞典では」「${pluginSettings.bookTitle || '辞典'}の文脈では」といった、辞典自体を客観的に説明するような表現は一切含めないでください。`;
+        prompt += `\n\nこの辞典特有の意味を主軸とし、一般的な意味は補足として記述してください。`;
+
         if (pluginSettings.bookDescription) {
             prompt += `\n 辞典の説明: ${pluginSettings.bookDescription}。`;
         }
@@ -203,17 +208,9 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         if (pluginSettings.authorDescription) {
             prompt += `\n 編纂者の説明: ${pluginSettings.authorDescription}。`;
         }
-        prompt += `\n\n基本的にこの辞典特有の意味を優先します。`;
-        prompt += `\n\n一般的な意味がある場合はわかるように併記してください。`;
         prompt += `\n\n意味(definitions)だけでは説明が難しい場合は解説(explanation)を記述してください。`;
         prompt += `\n\n意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。`;
-        prompt += `\n\n解説、フレーバーテキストは、この辞典特有の単語との関連性を考慮して記述してください。`;
-        prompt += `\n\n関連性を辿ることで、より深い理解が得られるようにすることが辞典の役割です。`;
-        prompt += `\n\n箇条書きではなく、文章形式で記述してください。`;
-        //文字数制限をかけた場合に情報が少なくなりすぎた
         prompt += `\n\n意味、解説、フレーバーテキストの項目は冗長になりすぎないように記述してください。`;
-        prompt += `\n\n「この辞典の文脈で」等の記載は不要です。辞典に記載する内容は、すでにこの辞典の文脈であることを前提としています。`;
-        prompt += `\n\nこの辞典固有の単語に関しては関連する単語との関連性を考慮して詳細に記述してください。`;
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。一般的な単語については、ルビを振らないでください。`;
         prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
         prompt += `\n\n類義語、対義語、関連語の項目は、主にこの辞典固有の単語を記載してください。`;
