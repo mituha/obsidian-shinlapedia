@@ -35,6 +35,13 @@ export class LexicalEntryFormatter {
             parts.push('');
         }
 
+        // 解説
+        if (entry.explanation) {
+            parts.push('## 解説');
+            parts.push(entry.explanation);
+            parts.push('');
+        }
+
         // フレーバーテキスト
         if (entry.flavorText) {
             parts.push('---');

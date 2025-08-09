@@ -2,6 +2,12 @@
 
 ## 完了済みの作業
 
+- [x] **語彙情報への「解説」項目追加**
+    - [x] `src/models/lexicalEntry.ts` のモデルに `explanation` プロパティを追加した。
+    - [x] `src/services/geminiService.ts` のプロンプトを更新し、解説を生成させるようにした。
+    - [x] `src/formatters/lexicalEntryFormatter.ts` を更新し、解説を表示するようにした。
+    - [x] `docs/AI語彙情報生成仕様書.md` を更新した。
+    - [x] `docs/プラグイン仕様書.md` を更新した。
 - [x] **UI改善: AIチャットのコピー機能実装**
     - `docs/UI改善計画.md` に基づき、チャット内容をコピーする機能を追加した。
 

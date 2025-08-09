@@ -26,6 +26,12 @@ export class LexicalEntry {
      * 語の定義の配列
      */
     definitions: string[];
+
+    /**
+     * 単語の意味だけでは理解しづらい内容に対する解説
+     */
+    explanation?: string;
+
     /**
      * フレーバーテキストや補足情報
      */
@@ -73,6 +79,7 @@ export class LexicalEntry {
         definitions: string[],
         options: {
             reading?: string;
+            explanation?: string;
             flavorText?: string;
             examples?: { sentence: string; source?: string }[];
             synonyms?: string[];
@@ -88,6 +95,7 @@ export class LexicalEntry {
         this.partOfSpeech = partOfSpeech;
         this.definitions = definitions;
         this.reading = options.reading;
+        this.explanation = options.explanation;
         this.flavorText = options.flavorText;
         this.examples = options.examples;
         this.synonyms = options.synonyms;
@@ -110,6 +118,7 @@ export class LexicalEntry {
                     items: { type: "STRING" },
                     description: "語の定義の配列"
                 },
+                explanation: { type: "STRING", description: "単語の意味だけでは理解しづらい内容に対する解説" },
                 flavorText: { type: "STRING", description: "フレーバーテキストや補足情報" },
                 examples: {
                     type: "ARRAY",
@@ -152,6 +161,7 @@ export class LexicalEntry {
             json.definitions,
             {
                 reading: json.reading,
+                explanation: json.explanation,
                 flavorText: json.flavorText,
                 examples: json.examples,
                 synonyms: json.synonyms,

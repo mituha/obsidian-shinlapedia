@@ -25,8 +25,9 @@ AIに与えられるプロンプトは、基本構造とユーザー設定に基
 
 基本的にこの辞典特有の意味を優先します。
 一般的な意味がある場合はわかるように併記してください。
+意味(definitions)だけでは説明が難しい場合は解説(explanation)を記述してください。
 意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。
-意味、フレーバーテキストの項目は冗長になりすぎないように140文字以内で記述してください。
+意味、解説、フレーバーテキストの項目は冗長になりすぎないように140文字以内で記述してください。
 ルビを振る場合、 |漢字《かんじ》 の形式で記述してください。
 現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。
 類義語、対義語、関連語の項目のリンク記述は不要です。
@@ -60,6 +61,7 @@ AIは `responseMimeType: "application/json"` と `responseSchema` を利用し�
 | `reading` | STRING | 語の読み方や発音 | |
 | `partOfSpeech` | STRING | 品詞 | ✅ |
 | `definitions` | ARRAY[STRING] | 語の定義の配列 | ✅ |
+| `explanation` | STRING | 単語の意味だけでは理解しづらい内容に対する解説 | |
 | `flavorText` | STRING | フレーバーテキストや補足情報 | |
 | `etymology` | STRING | 語源 | |
 | `examples` | ARRAY[OBJECT] | 例文の配列 | |
@@ -83,6 +85,7 @@ AIは `responseMimeType: "application/json"` と `responseSchema` を利用し�
             "items": { "type": "STRING" },
             "description": "語の定義の配列"
         },
+        "explanation": { "type": "STRING", "description": "単語の意味だけでは理解しづらい内容に対する解説" },
         "flavorText": { "type": "STRING", "description": "フレーバーテキストや補足情報" },
         "examples": {
             "type": "ARRAY",
