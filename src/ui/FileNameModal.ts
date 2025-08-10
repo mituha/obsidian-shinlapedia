@@ -3,10 +3,11 @@ import { ShinLapediaPluginSettings } from '../shinLapediaSettings';
 
 export class FileNameModal extends Modal {
     fileName: string;
+    overwrite: boolean;
     settings: ShinLapediaPluginSettings;
-    onSubmit: (fileName: string) => void;
+    onSubmit: (fileName: string, overwrite: boolean) => void;
 
-    constructor(app: App, settings: ShinLapediaPluginSettings, onSubmit: (fileName: string) => void) {
+    constructor(app: App, settings: ShinLapediaPluginSettings, onSubmit: (fileName: string, overwrite: boolean) => void) {
         super(app);
         this.settings = settings;
         this.onSubmit = onSubmit;
@@ -29,6 +30,13 @@ export class FileNameModal extends Modal {
                     }
                 });
             });
+        new Setting(contentEl)
+            .setName('更新を許可する')
+            .addToggle((toggle) => {
+                toggle.onChange((value) => {
+                    this.overwrite = value;
+                });
+            });
 
         new Setting(contentEl)
             .addButton((btn) =>
@@ -43,10 +51,10 @@ export class FileNameModal extends Modal {
 
     submitForm() {
         if (this.fileName) {
-            this.onSubmit(this.fileName);
+            this.onSubmit(this.fileName, this.overwrite);
             this.close();
         } else {
-            new Notice('ファイル名を入力してください。');
+            new Notice('単語を入力してください。');
         }
     }
 

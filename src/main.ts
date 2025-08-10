@@ -1,4 +1,4 @@
-import { App, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { App, MarkdownView, normalizePath, Notice, Plugin, TFile } from 'obsidian';
 import { initializeGeminiAI, getWordDefinition } from './services/geminiService';
 import { ShinLapediaPluginSettings, DEFAULT_SETTINGS } from './shinLapediaSettings';
 import { ShinLapediaSettingsTab } from './shinLapediaSettingsTab';
@@ -51,8 +51,8 @@ export default class ShinLapediaPlugin extends Plugin {
 			id: 'create-new-shinlapedia-entry',
 			name: '新規単語作成',
 			callback: () => {
-				new FileNameModal(this.app, this.settings, (fileName) => {
-					this.createShinLapediaFile(fileName);
+				new FileNameModal(this.app, this.settings, (fileName, overwrite) => {
+					this.createShinLapediaFile(fileName, overwrite);
 				}).open();
 			}
 		});
@@ -143,7 +143,9 @@ export default class ShinLapediaPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async createShinLapediaFile(fileName: string) {
+	async createShinLapediaFile(fileName: string, overwrite: boolean) {
+		console.log(`Creating ShinLapedia file: ${fileName},overwrite=${overwrite}`);
+
 		if (!fileName.endsWith('.md')) {
 			fileName += '.md';
 		}
@@ -151,21 +153,51 @@ export default class ShinLapediaPlugin extends Plugin {
 		let filePath = fileName;
 		const bookFolder = this.dictionaryProvider.getBookFolder();
 		if (bookFolder) {
+			//ここで区切り文字が\に変わっている
 			filePath = path.join(bookFolder, fileName);
 		}
+		console.log(`ファイルパス: ${filePath}`);
+		filePath = normalizePath(filePath); // Obsidianのパス形式に正規化
+		console.log(`ファイルパス: ${filePath}`);
 
 		// ファイルが存在するかチェックするわん
 		const fileExists = await this.app.vault.adapter.exists(filePath);
+		console.log(`ファイル '${filePath}' の存在確認: ${fileExists}`);
 
 		if (fileExists) {
-			console.warn(`わん！ファイル '${filePath}' は既に存在するわん。既存のファイルを開くわん。`);
-			const existingFile = this.app.vault.getAbstractFileByPath(filePath);
-			if (existingFile instanceof TFile) {
-				this.app.workspace.getLeaf('tab').openFile(existingFile);
+			//getAbstractFileByPathがうまく動作しない？ object？を返す
+			//this.app.vault.getAbstractFileByPath(filePath);
+			const existingFile = this.app.vault.getFileByPath(filePath);
+			console.log(`既存のファイル:`, existingFile);
+			if (existingFile) {
+				if (overwrite) {
+					console.log(`ファイル '${existingFile.path}' を更新します。`);
+
+					//処理に時間がかかるため、ユーザーに視覚的に通知
+					try {
+						document.body.style.cursor = 'wait';
+						const notice = new Notice(`ファイル ${existingFile.path} の内容をAIで生成しています...`);
+
+						await this.dictionaryProvider.updateWordFile(existingFile);
+
+						//通知を消す
+						notice.hide();
+					} catch (error) {
+						console.error(`ファイル ${existingFile.path} の内容生成中にエラーが発生しました:`, error);
+						new Notice(`ファイル ${existingFile.path} の内容生成中にエラーが発生しました。コンソールを確認してください。`);
+					} finally {
+						document.body.style.cursor = 'auto'; // カーソルを元に戻す 'default'では駄目っぽい
+					}
+
+				}else {
+					console.warn(`わん！ファイル '${filePath}' は既に存在するわん。既存のファイルを開くわん。`);
+				}
+				this.app.workspace.getLeaf(true).openFile(existingFile);
+			}else{
+				console.warn(`わん！ファイル '${filePath}' は既に存在するが、TFileではないわん。処理を中止するわん。`); // 例えばフォルダなどの可能性があるわん
 			}
 			return; // 処理を終了するわん
 		}
-
 		try {
 			const file = await this.app.vault.create(filePath, '');
 			this.app.workspace.getLeaf(true).openFile(file);
