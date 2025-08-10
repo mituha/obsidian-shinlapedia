@@ -201,6 +201,11 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
 
         if (pluginSettings.bookDescription) {
             prompt += `\n 辞典の説明: ${pluginSettings.bookDescription}。`;
+
+            prompt += `\n\nこの辞典の内容は、${pluginSettings.bookTitle}の文脈に基づいています。`;
+            prompt += `\n\nこの辞典の内容は、${pluginSettings.bookTitle}の世界観や設定に基づいています。`;
+            prompt += `\n\nこの辞典の内容は、${pluginSettings.bookTitle}の物語やテーマに基づいています。`;
+            prompt += `\n\nこの辞典が架空の世界観、設定、物語に基づく場合、世界観、設定、物語が広がるような内容で記述してください。`;
         }
         if (pluginSettings.authorName) {
             prompt += `\n 編纂者「${pluginSettings.authorName}」の視点から説明してください。`;
@@ -210,7 +215,10 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         }
         prompt += `\n\n意味(definitions)だけでは説明が難しい場合は解説(explanation)を記述してください。`;
         prompt += `\n\n意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。`;
+        prompt += `\n\n意味(definition)が具体的な物品を指す場合は、物品の説明を記述してください。`;
         prompt += `\n\n意味、解説、フレーバーテキストの項目は冗長になりすぎないように記述してください。`;
+        prompt += `\n\n文章は長すぎない程度に留め、適切な改行を挿入してください。`;
+        prompt += `\n\n意味、フレーバーテキストの項目は編纂者の視点ではなく、その世界観や設定に没入した視点で記述してください。`;
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。一般的な単語については、ルビを振らないでください。`;
         prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
         prompt += `\n\n類義語、対義語、関連語の項目は、主にこの辞典固有の単語を記載してください。`;
