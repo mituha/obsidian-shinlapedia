@@ -52,3 +52,4 @@ export class CommentEntry {
 
         return new CommentEntry(content, { alignment, role, name });
     }
+}

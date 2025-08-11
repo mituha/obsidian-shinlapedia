@@ -1,5 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
+import { CommentEntry } from './CommentEntry';
 
 export class LexicalEntry {
     /**
@@ -58,6 +59,11 @@ export class LexicalEntry {
     antonyms?: string[];
 
     /**
+     * 閲覧者によるコメント
+     */
+    comments?: CommentEntry[];
+
+    /**
      * タグやラベル
      */
     tags?: string[];
@@ -84,6 +90,7 @@ export class LexicalEntry {
             examples?: { sentence: string; source?: string }[];
             synonyms?: string[];
             antonyms?: string[];
+            comments?: CommentEntry[];
             tags?: string[];
             etymology?: string;
             createdAt?: Date;
@@ -100,6 +107,7 @@ export class LexicalEntry {
         this.examples = options.examples;
         this.synonyms = options.synonyms;
         this.antonyms = options.antonyms;
+        this.comments = options.comments;
         this.tags = options.tags;
         this.etymology = options.etymology;
         this.createdAt = options.createdAt || new Date();
@@ -107,6 +115,7 @@ export class LexicalEntry {
     }
 
     public static getJSONSchema() {
+        const commentJSONSchema = CommentEntry.getJSONSchema();
         return {
             type: "OBJECT",
             properties: {
@@ -143,6 +152,11 @@ export class LexicalEntry {
                     description: "対義語"
                 },
                 etymology: { type: "STRING", description: "語源" },
+                comments: {
+                    type: "ARRAY",
+                    items: commentJSONSchema,
+                    description: "閲覧者によるコメントの配列"
+                },
                 tags: {
                     type: "ARRAY",
                     items: { type: "STRING" },
@@ -166,6 +180,7 @@ export class LexicalEntry {
                 examples: json.examples,
                 synonyms: json.synonyms,
                 antonyms: json.antonyms,
+                comments: json.comments ? json.comments.map((c: any) => CommentEntry.fromJSON(c)) : undefined,
                 tags: json.tags,
                 etymology: json.etymology,
             }

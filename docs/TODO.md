@@ -10,6 +10,12 @@
     - [x] `docs/プラグイン仕様書.md` を更新した。
 - [x] **UI改善: AIチャットのコピー機能実装**
     - `docs/UI改善計画.md` に基づき、チャット内容をコピーする機能を追加した。
+- [x] **閲覧者コメント機能の実装**
+    - [x] `src/models/CommentEntry.ts` を作成し、コメントのデータモデルを定義する。
+    - [x] `src/models/lexicalEntry.ts` に `comments: CommentEntry[]` プロパティを追加し、JSONスキーマを更新する。
+    - [x] `src/services/geminiService.ts` のプロンプトを更新し、閲覧者コメントを生成する指示を追加する。
+    - [x] `src/formatters/lexicalEntryFormatter.ts` を更新し、コメントをMarkdown形式で表示する処理を追加する。
+    - [x] `docs/AI語彙情報生成仕様書.md` と `docs/プラグイン仕様書.md` に新機能の仕様を追記する。
 
 ## 次回作業予定
 

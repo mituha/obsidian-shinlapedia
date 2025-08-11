@@ -1,4 +1,5 @@
 import { LexicalEntry } from '../models/lexicalEntry';
+import { CommentEntryFormatter } from './CommentEntryFormatter';
 
 /**
  * LexicalEntryオブジェクトを様々な形式に変換するためのフォーマッタークラス
@@ -83,8 +84,17 @@ export class LexicalEntryFormatter {
             parts.push(entry.antonyms.map(a => `- [[${a}]]`).join('\n'));
             parts.push('');
         }
+
+        // 8. コメント
+        if (entry.comments && entry.comments.length > 0) {
+            parts.push('## 閲覧者コメント');
+            entry.comments.forEach(comment => {
+                parts.push(CommentEntryFormatter.format(comment));
+            });
+            parts.push('');
+        }
         
-        // 8. タグ
+        // 9. タグ
         if (entry.tags && entry.tags.length > 0) {
             parts.push('---');
             parts.push(entry.tags.map(t => `#${t}`).join(' '));

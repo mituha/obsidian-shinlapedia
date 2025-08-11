@@ -219,6 +219,10 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         prompt += `\n\n意味、解説、フレーバーテキストの項目は冗長になりすぎないように記述してください。`;
         prompt += `\n\n文章は長すぎない程度に留め、適切な改行を挿入してください。`;
         prompt += `\n\n意味、フレーバーテキストの項目は編纂者の視点ではなく、その世界観や設定に没入した視点で記述してください。`;
+        prompt += `\n\nこの単語を閲覧した架空の人物によるコメントを2～3件生成してください。`;
+        prompt += `\nコメント(comments)では、コメンテーターの個性や立場が反映された、世界観が広がるような内容を記述してください。`;
+        prompt += `\nコメンテーターの名前(name)は、その世界観に合った名前を設定してください。`;
+        prompt +=  `\nコメンテーターは[陽気な(alignment)][ぬいぐるみ系VTuber(role)][猫乃わん太(name)]のようにその性格や役割を表す要素を含める名乗りができ、匿名にすることもできます。`;
         prompt += `\n\nルビを振る場合、 |漢字《かんじ》 の形式で記述してください。一般的な単語については、ルビを振らないでください。`;
         prompt += `\n\n現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。`;
         prompt += `\n\n類義語、対義語、関連語の項目は、主にこの辞典固有の単語を記載してください。`;
@@ -253,12 +257,12 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
             { role: "user", parts: [{ text: prompt }] },
         ];
         if (entry) {
-            let entryPrompt = `ユーザーは下記単語のページを見ています。必要に応じて再編纂してください。\n`;
-            entryPrompt += `\n\n---\n\n`;
+            let entryPrompt = `ユーザーは下記単語のページを見ています。必要に応じて再編纂しつつこの内容をなるべく反映させてください。\n`;
+            entryPrompt += `\n\n------\n\n`;
             entryPrompt += entry;
-            entryPrompt += `\n\n---\n\n`;
+            entryPrompt += `\n\n------\n\n`;
             if (isRewrite) {
-                entryPrompt += `\n\nこの内容は更新される必要が生じています。他の情報を参照して、必要な情報を追加、更新してください。`;
+                entryPrompt += `\n\nこの内容は更新される必要が生じています。他の情報を参照して、最新の内容に情報を修正、追加、更新してください。`;
             }
             history.push({ role: "user", parts: [{ text: entryPrompt }] });
         }

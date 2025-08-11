@@ -28,6 +28,9 @@ AIに与えられるプロンプトは、基本構造とユーザー設定に基
 意味(definitions)だけでは説明が難しい場合は解説(explanation)を記述してください。
 意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。
 意味、解説、フレーバーテキストの項目は冗長になりすぎないように140文字以内で記述してください。
+この単語を閲覧した架空の人物によるコメントを2～3件生成してください。
+コメント(comments)では、コメンテーターの個性や立場が反映された、世界観が広がるような内容を記述してください。
+コメンテーターの名前(commenterName)は、その世界観に合った名前を設定してください。
 ルビを振る場合、 |漢字《かんじ》 の形式で記述してください。
 現在の単語以外のこの辞典特有の固有単語には、 [固有単語](固有単語.md) の形式でリンクを記述してください。なお、リンク先にはルビを含めないでください。
 類義語、対義語、関連語の項目のリンク記述は不要です。
@@ -69,6 +72,10 @@ AIは `responseMimeType: "application/json"` と `responseSchema` を利用し�
 | `examples.source` | STRING | 例文の出典 | |
 | `synonyms` | ARRAY[STRING] | 類義語の配列 | |
 | `antonyms` | ARRAY[STRING] | 対義語の配列 | |
+| `comments` | ARRAY[OBJECT] | 閲覧者によるコメントの配列 | |
+| `comments.commenterName` | STRING | コメント投稿者の名前 | ✅ |
+| `comments.commentText` | STRING | コメント本文 | ✅ |
+| `comments.timestamp` | STRING | 投稿日時 (ISO 8601形式) | |
 | `tags` | ARRAY[STRING] | タグやラベルの配列 | |
 
 ### スキーマ (JSON形式)
@@ -110,6 +117,19 @@ AIは `responseMimeType: "application/json"` と `responseSchema` を利用し�
             "description": "対義語"
         },
         "etymology": { "type": "STRING", "description": "語源" },
+        "comments": {
+            "type": "ARRAY",
+            "items": {
+                "type": "OBJECT",
+                "properties": {
+                    "commenterName": { "type": "STRING", "description": "コメント投稿者の名前" },
+                    "commentText": { "type": "STRING", "description": "コメント本文" },
+                    "timestamp": { "type": "STRING", "description": "投稿日時 (ISO 8601形式)" }
+                },
+                "required": ["commenterName", "commentText"]
+            },
+            "description": "閲覧者によるコメントの配列"
+        },
         "tags": {
             "type": "ARRAY",
             "items": { "type": "STRING" },
