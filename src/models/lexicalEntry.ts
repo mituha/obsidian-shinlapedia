@@ -1,7 +1,6 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { CommentEntry } from './CommentEntry';
-
+import { MemoEntry } from './MemoEntry';
 export class LexicalEntry {
     /**
      * 語彙エントリの一意なID
@@ -64,6 +63,11 @@ export class LexicalEntry {
     comments?: CommentEntry[];
 
     /**
+     * 使用者によるプライベートなメモ
+     */
+    memos?: MemoEntry[];
+
+    /**
      * タグやラベル
      */
     tags?: string[];
@@ -91,6 +95,7 @@ export class LexicalEntry {
             synonyms?: string[];
             antonyms?: string[];
             comments?: CommentEntry[];
+            memos?: MemoEntry[];
             tags?: string[];
             etymology?: string;
             createdAt?: Date;
@@ -108,6 +113,7 @@ export class LexicalEntry {
         this.synonyms = options.synonyms;
         this.antonyms = options.antonyms;
         this.comments = options.comments;
+        this.memos = options.memos;
         this.tags = options.tags;
         this.etymology = options.etymology;
         this.createdAt = options.createdAt || new Date();
@@ -116,6 +122,7 @@ export class LexicalEntry {
 
     public static getJSONSchema() {
         const commentJSONSchema = CommentEntry.getJSONSchema();
+        const memoJSONSchema = MemoEntry.getJSONSchema();
         return {
             type: "OBJECT",
             properties: {
@@ -157,6 +164,11 @@ export class LexicalEntry {
                     items: commentJSONSchema,
                     description: "閲覧者によるコメントの配列"
                 },
+                memos: {
+                    type: "ARRAY",
+                    items: memoJSONSchema,
+                    description: "使用者によるプライベートなメモの配列"
+                },
                 tags: {
                     type: "ARRAY",
                     items: { type: "STRING" },
@@ -181,6 +193,7 @@ export class LexicalEntry {
                 synonyms: json.synonyms,
                 antonyms: json.antonyms,
                 comments: json.comments ? json.comments.map((c: any) => CommentEntry.fromJSON(c)) : undefined,
+                memos: json.memos ? json.memos.map((m: any) => MemoEntry.fromJSON(m)) : undefined,
                 tags: json.tags,
                 etymology: json.etymology,
             }
