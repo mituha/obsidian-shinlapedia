@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-shinlapedia",
-	"version": "0.12.0",
+	"version": "0.12.1",
 	"description": "This is a plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
@@ -16,8 +16,8 @@
 		"@types/jsdom": "^21.1.7",
 		"@types/node": "^24.0.13",
 		"@types/uuid": "^10.0.0",
-		"@typescript-eslint/eslint-plugin": "8.39.0",
-		"@typescript-eslint/parser": "8.39.0",
+		"@typescript-eslint/eslint-plugin": "^8.39.0",
+		"@typescript-eslint/parser": "^8.39.0",
 		"builtin-modules": "^5.0.0",
 		"esbuild": "^0.25.6",
 		"jsdom": "^26.1.0",
@@ -27,7 +27,7 @@
 		"vitest": "^3.2.4"
 	},
 	"dependencies": {
-		"@google/genai": "^1.9.0",
+		"@google/genai": "^1.14.0",
 		"uuid": "^11.1.0"
 	}
 }

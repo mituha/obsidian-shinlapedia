@@ -179,6 +179,24 @@ export const setActiveContext = async (): Promise<void> => {
     }
 };
 
+function getSystemPrompt (): string  {
+    if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
+        let systemPrompt = 'あなたは辞典の編纂者です。';
+        if (pluginSettings.authorName) {
+            systemPrompt = `あなたは辞典の編纂者「${pluginSettings.authorName}」です。`;
+            if (pluginSettings.authorDescription) {
+                systemPrompt += `\nあなたの設定: ${pluginSettings.authorDescription}。`;
+            }
+        }
+        if (pluginSettings.bookTitle) {
+            systemPrompt += `\nあなたは辞典「${pluginSettings.bookTitle}」を編纂しています。`;
+            if (pluginSettings.bookDescription) {
+                systemPrompt += `\n辞典の説明: ${pluginSettings.bookDescription}。`;
+            }
+        }
+        systemPrompt += `\n生成する文章には、「この辞典では」「${pluginSettings.bookTitle || '辞典'}の文脈では」といった、辞典自体を客観的に説明するような表現は一切含めないでください。`;
+        return systemPrompt;
+}
 
 const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string, ...dependentContents: string[]): Promise<string> => {
     if (!checkApiKey() || !ai || !pluginSettings) throw new Error(API_KEY_ERROR_MESSAGE);
@@ -187,6 +205,10 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
     const isRewrite = entry !== "" && useFunctionCalls;
 
     try {
+        //人格を含めた説明
+        const systemPrompt = getSystemPrompt();
+
+        //
         let prompt = `あなたは辞典の編纂者です。`;
 
         if (pluginSettings.bookTitle) {
@@ -194,9 +216,7 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         } else {
             prompt += `\nこれから、辞典に掲載するための「${word}」の項目を執筆します。`;
         }
-
         prompt += `\n\n辞典に掲載する文章として、その世界観や設定に完全に没入した視点で記述してください。`;
-        prompt += `\n生成する文章には、「この辞典では」「${pluginSettings.bookTitle || '辞典'}の文脈では」といった、辞典自体を客観的に説明するような表現は一切含めないでください。`;
         prompt += `\n\nこの辞典特有の意味を主軸とし、一般的な意味は補足として記述してください。`;
 
         if (pluginSettings.bookDescription) {
@@ -276,15 +296,18 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
             history.push({ role: "user", parts: [{ text: jsonPrompt }] });
         }
         const config0: GenerateContentConfig = {
+            systemInstruction: systemPrompt,
             tools: readOnlyTools,
         }
         const config1: GenerateContentConfig = {
+            systemInstruction: systemPrompt,
+            tools: tools,
             responseMimeType: "application/json",
             responseSchema: LexicalEntry.getJSONSchema()
         }
 
         const result = await ai.models.generateContent({
-            model: getActiveModel(),
+            model: getActiveModel(),            
             contents: history,
             config: toJson ? config1 : config0
         });
@@ -332,6 +355,7 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
                     model: getActiveModel(),
                     contents: history,
                     config: {
+                        systemInstruction: systemPrompt,
                         tools: readOnlyTools,
                     }
                 });
@@ -378,22 +402,8 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
 
     const context = await dictionaryProvider.getActiveFileContent();
 
-    let basePrompt = `あなたは博識な辞典の編纂者です。ユーザーと対話してください。`;
-
-    if (pluginSettings.authorName) {
-        basePrompt = `あなたは辞典の編纂者「${pluginSettings.authorName}」です。`;
-        if (pluginSettings.authorDescription) {
-            basePrompt += `\nあなたの設定: ${pluginSettings.authorDescription}。`;
-        }
-        basePrompt += `\nこの設定になりきって、ユーザーと対話してください。`;
-    }
-
-    if (pluginSettings.bookTitle) {
-        basePrompt += `\nあなたは辞典「${pluginSettings.bookTitle}」を編纂しています。`;
-        if (pluginSettings.bookDescription) {
-            basePrompt += `\n辞典の説明: ${pluginSettings.bookDescription}。`;
-        }
-    }
+    const systemPrompt = getSystemPrompt();
+    let basePrompt = "あなたは博識な辞典の編纂者です。ユーザーと対話してください。";
     basePrompt += "必要に応じて単語の登録状況を確認し、既存の単語の意味に沿うように回答してください。";
     basePrompt += "未登録、および既知の単語には[[単語]]の形でリンクを作成してください。";
     basePrompt += "ユーザーの依頼に応じて、`createWordEntry`ツールを使って新しい単語を辞典に登録することもできます。";
@@ -423,6 +433,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
             model: getActiveModel(),
             contents: history,
             config: {
+                systemInstruction: systemPrompt,
                 tools: tools,
             }
         });
@@ -464,6 +475,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
                 model: getActiveModel(),
                 contents: history,
                 config: {
+                    systemInstruction: systemPrompt,
                     tools: tools,
                 }
             });
