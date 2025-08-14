@@ -206,10 +206,11 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
 
     try {
         //人格を含めた説明
+        // 現状toolsとの併用はできなさそう？
         const systemPrompt = getSystemPrompt();
 
         //
-        let prompt = `あなたは辞典の編纂者です。`;
+        let prompt = systemPrompt;
 
         if (pluginSettings.bookTitle) {
             prompt += `\nあなたは辞典「${pluginSettings.bookTitle}」の編纂者として、その辞典に掲載するための「${word}」の項目を執筆します。`;
@@ -296,11 +297,11 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
             history.push({ role: "user", parts: [{ text: jsonPrompt }] });
         }
         const config0: GenerateContentConfig = {
-            systemInstruction: systemPrompt,
+            //systemInstruction: systemPrompt,
             tools: readOnlyTools,
         }
         const config1: GenerateContentConfig = {
-            systemInstruction: systemPrompt,
+            //systemInstruction: systemPrompt,
             tools: tools,
             responseMimeType: "application/json",
             responseSchema: LexicalEntry.getJSONSchema()
@@ -355,7 +356,7 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
                     model: getActiveModel(),
                     contents: history,
                     config: {
-                        systemInstruction: systemPrompt,
+                        //systemInstruction: systemPrompt,
                         tools: readOnlyTools,
                     }
                 });
@@ -403,7 +404,8 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
     const context = await dictionaryProvider.getActiveFileContent();
 
     const systemPrompt = getSystemPrompt();
-    let basePrompt = "あなたは博識な辞典の編纂者です。ユーザーと対話してください。";
+    let basePrompt = systemPrompt;
+    basePrompt += "ユーザーと対話してください。";
     basePrompt += "必要に応じて単語の登録状況を確認し、既存の単語の意味に沿うように回答してください。";
     basePrompt += "未登録、および既知の単語には[[単語]]の形でリンクを作成してください。";
     basePrompt += "ユーザーの依頼に応じて、`createWordEntry`ツールを使って新しい単語を辞典に登録することもできます。";
@@ -433,7 +435,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
             model: getActiveModel(),
             contents: history,
             config: {
-                systemInstruction: systemPrompt,
+                //systemInstruction: systemPrompt,
                 tools: tools,
             }
         });
@@ -475,7 +477,7 @@ export const generateChatResponse = async (userInput: string): Promise<string> =
                 model: getActiveModel(),
                 contents: history,
                 config: {
-                    systemInstruction: systemPrompt,
+                    //systemInstruction: systemPrompt,
                     tools: tools,
                 }
             });
