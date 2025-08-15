@@ -283,12 +283,15 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         ];
         if (entry) {
             let entryPrompt = `ユーザーは下記単語のページを見ています。必要に応じて再編纂しつつこの内容をなるべく反映させてください。\n`;
+            if(isRewrite){
+                //修正を要求
+                entryPrompt = `ユーザーは下記単語のページを見ていますが、内容を更新する必要が生じています。\n`;                
+                entryPrompt += `\n\n参考にはしつつ、最新の内容に情報を修正、更新してください。`;
+                entryPrompt += '\n\n特に間違った情報が含まれている可能性があるため、精査して修正してください。';
+            }
             entryPrompt += `\n\n------\n\n`;
             entryPrompt += entry;
             entryPrompt += `\n\n------\n\n`;
-            if (isRewrite) {
-                entryPrompt += `\n\nこの内容は更新される必要が生じています。他の情報を参照して、最新の内容に情報を修正、追加、更新してください。`;
-            }
             history.push({ role: "user", parts: [{ text: entryPrompt }] });
         }
         if (toJson) {
