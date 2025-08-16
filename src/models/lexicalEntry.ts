@@ -72,16 +72,6 @@ export class LexicalEntry {
      */
     tags?: string[];
 
-    /**
-     * 作成日時
-     */
-    createdAt: Date;
-
-    /**
-     * 最終更新日時
-     */
-    updatedAt: Date;
-
     constructor(
         id: string,
         lemma: string,
@@ -98,8 +88,6 @@ export class LexicalEntry {
             memos?: MemoEntry[];
             tags?: string[];
             etymology?: string;
-            createdAt?: Date;
-            updatedAt?: Date;
         } = {}
     ) {
         this.id = id;
@@ -116,8 +104,6 @@ export class LexicalEntry {
         this.memos = options.memos;
         this.tags = options.tags;
         this.etymology = options.etymology;
-        this.createdAt = options.createdAt || new Date();
-        this.updatedAt = options.updatedAt || new Date();
     }
 
     public static getJSONSchema() {
