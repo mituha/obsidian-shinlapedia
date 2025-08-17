@@ -1,6 +1,45 @@
 import { v4 as uuidv4 } from 'uuid';
 import { CommentEntry } from './CommentEntry';
 import { MemoEntry } from './MemoEntry';
+
+export class LexicalEntryDefinitions {
+    definitions: string[];
+    constructor(content: string[]) {
+        this.definitions = content;
+    }
+    public static getJSONSchema() {
+        return {
+            type: "OBJECT",
+            properties: {
+                definitions: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                    description: "語の定義の配列"
+                },
+            },
+            required: ["definitions"]
+        };
+    }
+}
+export class LexicalEntryFlavorText {
+    flavorText: string;
+    constructor(content: string) {
+        this.flavorText = content;
+    }
+    public static getJSONSchema() {
+        return {
+            type: "OBJECT",
+            properties: {
+                flavorText: {
+                    type: "STRING",
+                    description: "フレーバーテキストや補足情報"
+                },
+            },
+            required: ["flavorText"]
+        };
+    }
+}
+
 export class LexicalEntry {
     /**
      * 語彙エントリの一意なID
@@ -22,20 +61,16 @@ export class LexicalEntry {
      */
     partOfSpeech: string;
 
-    /**
-     * 語の定義の配列
+    /*
+     * 単語の定義、または、フレーバーテキスト
      */
-    definitions: string[];
+    content: LexicalEntryDefinitions | LexicalEntryFlavorText;
 
     /**
      * 単語の意味だけでは理解しづらい内容に対する解説
      */
     explanation?: string;
 
-    /**
-     * フレーバーテキストや補足情報
-     */
-    flavorText?: string;
 
     /**
      * 例文
@@ -75,12 +110,11 @@ export class LexicalEntry {
     constructor(
         id: string,
         lemma: string,
+        reading: string,
         partOfSpeech: string,
-        definitions: string[],
+        content: LexicalEntryDefinitions | LexicalEntryFlavorText,
         options: {
-            reading?: string;
             explanation?: string;
-            flavorText?: string;
             examples?: { sentence: string; source?: string }[];
             synonyms?: string[];
             antonyms?: string[];
@@ -92,11 +126,10 @@ export class LexicalEntry {
     ) {
         this.id = id;
         this.lemma = lemma;
+        this.reading = reading;
         this.partOfSpeech = partOfSpeech;
-        this.definitions = definitions;
-        this.reading = options.reading;
+        this.content = content;
         this.explanation = options.explanation;
-        this.flavorText = options.flavorText;
         this.examples = options.examples;
         this.synonyms = options.synonyms;
         this.antonyms = options.antonyms;
@@ -107,21 +140,28 @@ export class LexicalEntry {
     }
 
     public static getJSONSchema() {
-        const commentJSONSchema = CommentEntry.getJSONSchema();
-        const memoJSONSchema = MemoEntry.getJSONSchema();
         return {
             type: "OBJECT",
             properties: {
                 lemma: { type: "STRING", description: "見出し語" },
                 reading: { type: "STRING", description: "語の読み方や発音" },
                 partOfSpeech: { type: "STRING", description: "品詞" },
-                definitions: {
+                /* oneOfは使用できない
+                content: {
+                    oneOf: [
+                        LexicalEntryDefinitions.getJSONSchema(),
+                        LexicalEntryFlavorText.getJSONSchema()
+                    ],
+                    description: "単語の定義、または、フレーバーテキスト"
+                },
+                */  
+                definitions:{
                     type: "ARRAY",
                     items: { type: "STRING" },
-                    description: "語の定義の配列"
+                    description: "語の定義の配列 / flavorTextと排他"
                 },
+                flavorText: { type: "STRING", description: "フレーバーテキストや補足情報 / definitionsと排他" },
                 explanation: { type: "STRING", description: "単語の意味だけでは理解しづらい内容に対する解説" },
-                flavorText: { type: "STRING", description: "フレーバーテキストや補足情報" },
                 examples: {
                     type: "ARRAY",
                     items: {
@@ -147,12 +187,12 @@ export class LexicalEntry {
                 etymology: { type: "STRING", description: "語源" },
                 comments: {
                     type: "ARRAY",
-                    items: commentJSONSchema,
+                    items: CommentEntry.getJSONSchema(),
                     description: "閲覧者によるコメントの配列"
                 },
                 memos: {
                     type: "ARRAY",
-                    items: memoJSONSchema,
+                    items: MemoEntry.getJSONSchema(),
                     description: "使用者によるプライベートなメモの配列"
                 },
                 tags: {
@@ -161,20 +201,22 @@ export class LexicalEntry {
                     description: "タグやラベル"
                 }
             },
-            required: ["lemma", "partOfSpeech", "definitions"]
+            required: ["lemma", "reading", "partOfSpeech", "definitions","flavorText"]
         };
     }
 
     public static fromJSON(json: any): LexicalEntry {
+        console.log("LexicalEntry.fromJSON");
+        console.log(json);
+
         return new LexicalEntry(
             uuidv4(),
             json.lemma,
+            json.reading,
             json.partOfSpeech,
-            json.definitions,
+            (json.definitions && json.definitions.length > 0 ) ? new LexicalEntryDefinitions(json.definitions) : new LexicalEntryFlavorText(json.flavorText),
             {
-                reading: json.reading,
                 explanation: json.explanation,
-                flavorText: json.flavorText,
                 examples: json.examples,
                 synonyms: json.synonyms,
                 antonyms: json.antonyms,

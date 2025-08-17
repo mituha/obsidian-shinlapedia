@@ -236,6 +236,7 @@ const getLexicalEntryCore = async (word: string, toJson: boolean, entry: string,
         }
         prompt += `\n\n意味(definitions)だけでは説明が難しい場合は解説(explanation)を記述してください。`;
         prompt += `\n\n意味(definition)よりフレーバーテキスト(flavorText)が適切な場合は、意味ではなくフレーバーテキストを記述してください。`;
+        prompt += `\n\n意味(definition)またはフレーバーテキスト(flavorText)は適切な方のみ記述し、片方は空としてください。`;
         prompt += `\n\n意味(definition)が具体的な物品を指す場合は、物品の説明を記述してください。`;
         prompt += `\n\n意味、解説、フレーバーテキストの項目は冗長になりすぎないように記述してください。`;
         prompt += `\n\n文章は長すぎない程度に留め、適切な改行を挿入してください。`;

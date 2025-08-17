@@ -1,4 +1,4 @@
-import { LexicalEntry } from '../models/lexicalEntry';
+import { LexicalEntry, LexicalEntryDefinitions, LexicalEntryFlavorText } from '../models/lexicalEntry';
 import { CommentEntryFormatter } from './CommentEntryFormatter';
 
 /**
@@ -19,37 +19,36 @@ export class LexicalEntryFormatter {
         parts.push('');
 
         // 2. 読みと品詞
-        const subHeader: string[] = [];
-        if (entry.reading) {
-            subHeader.push(`*${entry.reading}*`);
-        }
-        subHeader.push(`【${entry.partOfSpeech}】`);
-        parts.push(subHeader.join('  '));
+        parts.push(`*${entry.reading}* 【${entry.partOfSpeech}】`);
         parts.push('');
 
-        // 3. 定義
-        if (entry.definitions && entry.definitions.length > 0) {
-            parts.push('## 意味');
-            parts.push('');
-            entry.definitions.forEach((def, index) => {
-                parts.push(`${index + 1}. ${def}`);
-            });
-            parts.push('');
-        }
-
+        // 3. 定義またはフレーバーテキスト
+        if(entry.content instanceof LexicalEntryDefinitions){
+            const definitions = entry.content.definitions;
+            if (definitions.length > 0) {
+                parts.push('## 意味');
+                definitions.forEach((def, index) => {
+                    parts.push(`${index + 1}. ${def}`);
+                });
+                parts.push('');
+            }
+        }else if(entry.content instanceof LexicalEntryFlavorText){
+            const flavorText = entry.content.flavorText;
+            if (flavorText) {
+                parts.push('---');
+                parts.push('');
+                parts.push(`> ${flavorText.replace(/\n/g, '\n> ')}`);
+                parts.push(''); 
+                parts.push('---');
+                parts.push(''); 
+            }
+        }            
+ 
         // 解説
         if (entry.explanation) {
             parts.push('## 解説');
             parts.push('');
             parts.push(entry.explanation);
-            parts.push('');
-        }
-
-        // フレーバーテキスト
-        if (entry.flavorText) {
-            parts.push('---');
-            parts.push('');
-            parts.push(`> ${entry.flavorText.replace(/\n/g, '\n> ')}`);
             parts.push('');
         }
 
